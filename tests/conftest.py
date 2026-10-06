@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 runtime = ROOT / "runtime"
 runtime.mkdir(exist_ok=True)
-# Tests use their own database file, so running VERIFY-PRIVPASS.bat never touches your real accounts or data.
+# Tests use their own database file, so running scripts\VERIFY-PRIVPASS.bat never touches your real accounts or data.
 db = runtime / "privpass-test.db"
 os.environ["DATABASE_URL"] = f"sqlite:///{db.as_posix()}"
 if db.exists():

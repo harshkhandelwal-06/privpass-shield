@@ -111,7 +111,7 @@ All LLM features live in `app/ai/`:
    `<REDACTED:…>`. The raw value is never stored.
 2. `assert_clean` inspects **every outbound AI payload**. Anything provider-shaped or high-entropy
    aborts the call before it leaves the process, and the feature falls back to offline mode.
-3. Tests: `tests/test_v61_ai.py` (masking, guard blocks a leaking prompt with zero bytes sent, contexts never
+3. Tests: `tests/test_ai.py` (masking, guard blocks a leaking prompt with zero bytes sent, contexts never
    contain secrets, coach schema rejects smuggled passwords, PR comment contains no secrets).
 
 ## Enable Claude

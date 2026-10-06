@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 echo.
 echo ============================================================
-echo   PRIVPASS SHIELD 6.2 - ONE CLICK START
+echo   PRIVPASS SHIELD - ONE CLICK START
 echo ============================================================
 set "PYCMD="
 where py >nul 2>nul
@@ -25,7 +25,7 @@ exit /b 1
 :fail
 echo.
 echo PrivPass Shield could not start - see the message above.
-echo Tip: run RESET-PRIVPASS.bat to rebuild the environment, then try again.
+echo Tip: run scripts\RESET-PRIVPASS.bat to rebuild the environment, then try again.
 pause
 exit /b 1
 :done

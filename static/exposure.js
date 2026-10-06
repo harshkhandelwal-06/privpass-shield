@@ -1,4 +1,4 @@
-// PrivPass Shield 7.1 — Exposure map (view-exposure). Purely presentational: renders /api/exposure/graph.
+// PrivPass Shield — Exposure map (view-exposure). Purely presentational: renders /api/exposure/graph.
 (function () {
   const NS = 'http://www.w3.org/2000/svg';
   const C = { x: 400, y: 290 };

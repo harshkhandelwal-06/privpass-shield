@@ -93,7 +93,7 @@ A failing check only blocks a merge if the check is **required**:
 python tools/install_precommit.py --repo <path-to-git-clone>
 ```
 
-On Windows, run `INSTALL-SECRETGUARD-HOOK.bat` then `RUN-SECRETGUARD-HOOK-DEMO.bat`: a secret
+On Windows, run `scripts\INSTALL-SECRETGUARD-HOOK.bat` then `scripts\RUN-SECRETGUARD-HOOK-DEMO.bat`: a secret
 commit is blocked and a clean commit passes. The hook scans the staged index only.
 
 ## Web upload and hardened git

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PrivPass Shield 7.0 — design system
+   PrivPass Shield — design system
    Ink-black + signal lime, Inter Tight / Instrument Serif / JetBrains Mono.
    Every hook the app scripts depend on (.hidden, .open, .active, .show,
    .visible, .drag, state chips …) is defined here. Motion lives in motion.js.
