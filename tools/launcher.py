@@ -28,7 +28,7 @@ def main():
             run([str(PY),'-m','pip','install','--disable-pip-version-check','-r',str(req)])
         except subprocess.CalledProcessError:
             print('\nERROR: installing the required Python packages failed (see pip output above).', flush=True)
-            print('Check your internet connection, then run RESET-PRIVPASS.bat and START-PRIVPASS.bat again.', flush=True)
+            print('Check your internet connection, then run scripts\\RESET-PRIVPASS.bat and START-PRIVPASS.bat again.', flush=True)
             return 2
         marker.write_text(digest)
     env=os.environ.copy();env['PYTHONPATH']=str(ROOT);env.setdefault('APP_ENV','development')
@@ -46,7 +46,7 @@ def main():
     env['PORT']=str(free_port(int(os.getenv('PORT','8000')) if os.getenv('PORT') else 8000))
     run([str(PY),str(ROOT/'tools'/'ui_check.py')],env=env)
     run([str(PY),'-c','from app.db import init_db; init_db(); from app.bootstrap import ensure_demo_admin; ensure_demo_admin()'],env=env)
-    print(f'PrivPass Shield 7.3.0 -> http://localhost:{env["PORT"]}  (use localhost, not 127.0.0.1, so passkeys work)',flush=True)
+    print(f'PrivPass Shield -> http://localhost:{env["PORT"]}  (use localhost, not 127.0.0.1, so passkeys work)',flush=True)
     cred=ROOT/'runtime'/'ADMIN-CREDENTIALS.txt'
     if cred.exists():
         print('\n'+'='*72+'\n'+cred.read_text(encoding='utf-8').strip()+'\n'+'='*72+'\n',flush=True)
@@ -64,7 +64,7 @@ def main():
         except Exception: time.sleep(.25)
     if not ready:
         proc.terminate(); proc.wait(timeout=5)
-        raise RuntimeError('PrivPass API did not become healthy within 15 seconds; check logs and run DOCTOR-PRIVPASS.bat.')
+        raise RuntimeError('PrivPass API did not become healthy within 15 seconds; check logs and run scripts\\DOCTOR-PRIVPASS.bat.')
     webbrowser.open(f'http://localhost:{env["PORT"]}')  # passkeys (WebAuthn) require a domain name, not an IP
     try: return proc.wait()
     except KeyboardInterrupt:

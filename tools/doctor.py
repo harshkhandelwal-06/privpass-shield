@@ -2,7 +2,7 @@ from __future__ import annotations
 import importlib, os, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-print('PrivPass Shield 5.7 doctor')
+print('PrivPass Shield doctor')
 print('Python:',sys.version.split()[0])
 print('Root:',ROOT)
 for mod in ['fastapi','sqlalchemy','cryptography','argon2','jwt']:

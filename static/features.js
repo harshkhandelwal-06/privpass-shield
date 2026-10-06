@@ -1,4 +1,4 @@
-// PrivPass Shield 6.2 features. Loaded after app.js (shares its globals: state, api, $, $$, toast…).
+// PrivPass Shield platform features. Loaded after app.js (shares its globals: state, api, $, $$, toast…).
 
 // ---------------------------------------------------------------- offline breach corpus (Bloom filter)
 window.PrivPassBloom = (() => {

@@ -31,7 +31,7 @@ if len(re.findall(r'function\s+refreshPasswordAnalysis\s*\(', JS)) != 1:
 
 if 'demo-notes' in HTML or 'What to say:' in HTML or 'What not to claim:' in HTML:
     raise SystemExit('UI_CHECK_FAIL removed Demo Center speaker-coaching block is present')
-for required_path in ['tools/secret_scan.py', 'tools/install_precommit.py', '.githooks/pre-commit', '.github/workflows/secretguard.yml', 'docs/SECRETGUARD-CI.md', 'RUN-SECRETGUARD-DEMO.bat', 'INSTALL-SECRETGUARD-HOOK.bat', 'RUN-SECRETGUARD-HOOK-DEMO.bat', 'demo-assets/PrivPass-Clean-Demo-Repo.zip']:
+for required_path in ['tools/secret_scan.py', 'tools/install_precommit.py', '.githooks/pre-commit', '.github/workflows/secretguard.yml', 'docs/SECRETGUARD-CI.md', 'scripts/RUN-SECRETGUARD-DEMO.bat', 'scripts/INSTALL-SECRETGUARD-HOOK.bat', 'scripts/RUN-SECRETGUARD-HOOK-DEMO.bat', 'START-PRIVPASS.bat', 'demo-assets/PrivPass-Clean-Demo-Repo.zip']:
     if not (ROOT / required_path).exists():
         raise SystemExit('UI_CHECK_FAIL missing SecretGuard developer asset: ' + required_path)
 CSS = (ROOT / 'static' / 'styles.css').read_text(encoding='utf-8')

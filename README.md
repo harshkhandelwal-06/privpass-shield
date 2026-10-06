@@ -1,155 +1,295 @@
-# PrivPass Shield 7.3.0
+# PrivPass Shield
 
-**Continuous identity and credential exposure defense.** One product for two problems:
+**Continuous identity and credential exposure defense.** PrivPass Shield stops breached passwords from being used and
+catches leaked keys before they are merged, with one strict rule throughout: **no password and no secret value ever has
+to leave the user's control.**
 
-| Brief | What PrivPass Shield does |
+| Problem | What PrivPass Shield does |
 |---|---|
-| **#20 Block the Breached Password** | Browser-only strength analysis, HIBP k-anonymity breach check, a **reject-on-breach gate at signup *and* reset** with a server-issued ticket, a test-account audit report ("X % of test accounts use a breached password"), and a NIST SP 800-63B rev. 4 aligned policy. |
-| **#24 The Leaked Key Incident** | SecretGuard: one scanner for web upload, CLI, pre-commit and GitHub Actions. Detects provider secrets **and risky code**, **scans full git history**, cuts false positives with entropy, validity checks, vendor-example detection and opt-in **live provider verification**, **blocks the merge**, and teaches **rotate, don't just delete**. |
+| **Block the Breached Password** | Checks passwords against Have I Been Pwned with k-anonymity (only 5 characters of a hash leave the browser). Breached passwords are refused at sign-up, reset, change and **every sign-in**, enforced by the server. An account whose password later shows up in a breach is locked until it is reset. Includes a test-account audit (*"X % of test accounts use a breached password"*) and a NIST SP 800-63B aligned policy. |
+| **The Leaked Key Incident** | **SecretGuard** scans code and the **full git history** for leaked keys and risky code, cuts false positives with entropy, validity checks and a trained ML classifier, **blocks the merge** in CI, and guides the response: **rotate, don't just delete**, with provider runbooks, fix deadlines and an incident lifecycle. |
 
-The flow: **Prevent → Detect → Correlate → Contain → Rotate → Verify**
+**Prevent → Detect → Correlate → Contain → Rotate → Verify**
 
-## What's new in 7.3: breached passwords can't get in, even with a hacked browser
+---
 
-| Change | What it means |
-|---|---|
-| **Server-verified breach check** | At sign-up, reset, password change and **every sign-in**, the server itself checks HIBP (k-anonymity, 5-character prefix). It no longer takes the browser's word for it. |
-| **Can't be faked** | The login secret is derived from the exact values the server checked, so a modified browser that lies ends up with a different secret: the breached password can never sign in. Covered by tests. |
-| **Lock + reset** | If an account's password appears in a breach, the account is locked, **every session on every device is signed out**, a "Password breached: account locked" screen appears, and only a password reset unlocks it. Passkeys can't bypass the lock. |
-| **In session or not** | A background breach watch re-checks every account (default every 6 h, `PRIVPASS_BREACH_WATCH_MINUTES`), plus *Re-check all passwords now* for admins and *Check my password now* for users. |
-| **Still zero-knowledge** | The password, its full SHA-1 and the SHA-1 suffix never leave the browser. What the server stores is sealed with the server key. Details and trade-offs: `docs/THREAT-MODEL.md` §2. |
+## Contents
+[Features](#features) · [Privacy model](#privacy-model) · [Quick start](#quick-start) · [Accounts and admin](#accounts-and-admin) ·
+[Configuration](#configuration) · [5-minute demo](#5-minute-demo) · [SecretGuard in CI](#secretguard-in-ci) ·
+[Security claims and proofs](#security-claims-and-proofs) · [Tech stack](#tech-stack) · [Project structure](#project-structure) ·
+[Tests](#tests) · [Deployment](#deployment) · [Limitations](#limitations) · [Documentation](#documentation)
 
-Existing accounts upgrade automatically at their next sign-in (and are checked then).
+---
 
-## What's new in 7.2: ready for a public link
+## Features
 
-| Change | What it means |
-|---|---|
-| **Public demo deployment** | `render.yaml` deploys with production security plus the demo sandbox (`PRIVPASS_PUBLIC_DEMO=true`). Step-by-step guide: `docs/DEPLOY.md`. |
-| **Load demo data** | Command Center → *Load demo data* fills the demo workspace with a full story (2 repos incl. a history-only key, findings at every stage with one overdue, a tripped honeytoken, breach-gate stats, the test-account audit, login attacks). *Remove simulation data* deletes all of it. Public deployments load it automatically. |
-| **15-step guided tour** | Now covers the Exposure map, attack paths and the demo sandbox. If nobody is signed in it signs in as the demo admin and loads the sample data first. |
-| **Safer builds** | `.dockerignore` keeps `.env` and `runtime/` out of Docker images; tests use their own database file. |
+### Password Shield
+- **Analyses guessability, not decoration.** Pattern rules (dictionary words, names, your own name/company/email, years, keyboard walks, sequences, repeats, leetspeak) plus three attack models; the most conservative result wins.
+- **Three attack models, all in the browser:**
+  - a **neural network** (character-level GRU trained on public leaked-password lists) for passwords that *look like* leaked ones;
+  - a **word & name model** (103k ranked words and first names/surnames from many countries, including Indian names) for realistic crack times: `harsh khandelwal` ≈ 10^11 guesses, seconds offline;
+  - a **1M leaked-password Bloom filter** (1.8 MB) checked fully offline.
+- **HIBP check** with a privacy receipt showing exactly what left the browser (a 5-character SHA-1 prefix, padded responses).
+- **Secure generator** (Web Crypto, unbiased random secrets or passphrases), a **real-life benchmark** of five threat profiles, and an **AI coach** that only ever receives analysis flags.
 
-## What's new in 7.1
+### Breach gate, breach watch and account lock
+- **Sign-up, reset and password change** run a browser check (length 15+, common passwords, offline corpus, HIBP) and then a **server check**: the server queries HIBP itself and refuses a match. If HIBP is unreachable the request is refused (fail-closed).
+- **Can't be faked by a modified browser.** The login verifier is derived from the exact values the server checked, so a browser that lies about the check ends up with a verifier for a *different* password; the breached one can never sign in.
+- **Breach watch.** Every sign-in triggers a fresh check, and a background job re-checks every account (default every 6 hours), signed in or not. Admins can run *Re-check all passwords now*; users can run *Check my password now*.
+- **Lock + reset.** A breached account is locked, **every session on every device is signed out**, the user sees *"Password breached: account locked"*, and only a password reset unlocks it. Passkeys can't bypass the lock.
 
-| Change | What it means |
-|---|---|
-| **Demo and real workspaces** | The three demo accounts share a *demo workspace* and only ever see demo data. Accounts people create, and your private real admin, live in the *live workspace*. Every database query is filtered by workspace automatically, so nothing crosses over. |
-| **Private real admin** | Set `PRIVPASS_ADMIN_EMAIL` / `PRIVPASS_ADMIN_PASSWORD` in `.env`, or let the first start generate one into `runtime/ADMIN-CREDENTIALS.txt` (printed by the launcher; `python tools/admin_account.py --reset` makes a new one). It is never listed in the Demo Center. |
-| **Demo restrictions** | Demo accounts can't change or reset their password, the demo admin can't suspend or delete accounts, fix PRs (real GitHub token) are off, demo alerts never reach your real Slack/Teams webhook, and simulations only run in the demo workspace. |
-| **Word & name attack model** | Crack-time estimates now include how attackers really guess: ranked word lists, first names and surnames from many countries (including Indian names), years, leetspeak and your own name/company. "harsh khandelwal" is now ~10^11 guesses (seconds offline), not "a million years". |
-| **Password managers** | Chrome / Google Password Manager suggested passwords (and 1Password, Bitwarden…) are detected however they fill the field; the confirmation fills itself. |
-| **Exposure map** | A redesigned Exposure page: exposure score gauge with the factors behind it, an interactive attack-surface map, ranked attack paths with one-click fixes, controls coverage and a timeline. |
-| **Closable dropdowns** | Account and alert menus close with ✕, Esc, a second click or a click outside. |
+### Sign-in and accounts
+- **Zero-knowledge sign-in:** a one-time challenge and an HMAC proof; the password is never sent. Unknown emails get decoy values (no account enumeration).
+- **Passkeys** (WebAuthn: fingerprint, face or PIN), MFA (TOTP) via the API, single-use reset links.
+- **Password-manager friendly:** Chrome/Google Password Manager, 1Password and Bitwarden fills are detected and the confirmation fills itself.
+- Session cookies (HttpOnly, SameSite=Lax), session-bound CSRF tokens, per-IP rate limits.
 
-## What's new in 7.0: the redesign
+### Live privacy proof
+A 🛡 drawer lists every request the page sends and checks each one for any password typed on the page (plain text, normalised form, full SHA-1 and suffix). The count stays at **"Password found: 0"**.
 
-A complete visual redesign, built by hand in plain HTML/CSS/JS (no framework, no CDN, works offline):
+### Zero-knowledge vault
+A personal password manager for every account: titles, usernames, passwords, notes and tags are encrypted **in the browser** (AES-256-GCM, PBKDF2-SHA256 with 600k iterations). The server stores only ciphertext; admins see counts, never contents. Includes search, reuse detection, per-entry breach checks, rotation reminders, encrypted backups and auto-lock. Changing the password re-encrypts everything in the browser; a forgot-password reset clears the vault by design (there is no server recovery key).
 
-- **Landing page**: preloader, a giant split-text hero over an interactive hex field, a live **"try it"** card that hashes your typing into SHA-1 and highlights the 5 characters that would go to HIBP (nothing is sent), a marquee, a bento grid of modules, a pinned **scroll story** that animates k-anonymity step by step, count-up numbers and a finale.
-- **Motion**: custom cursor, magnetic buttons, card spotlights, scroll reveals, a sliding nav indicator, page transitions, a scroll-progress bar, and a full-screen menu on phones.
-- **Design system**: dark and light themes, self-hosted fonts (Inter Tight, Instrument Serif, JetBrains Mono), one accent colour, and consistent cards, tables and chips across every page.
-- **Accessible**: honours *reduced motion*, stays keyboard-usable, and every page works at phone width.
+### SecretGuard
+- **One engine, four entry points:** web upload (ZIP), command line, git pre-commit hook and GitHub Actions. GitHub repositories can also be scanned by URL.
+- **Detects** 15 provider credential types (AWS, GitHub/GitLab, Stripe, Slack, Google, OpenAI, Anthropic, SendGrid, private keys, JWTs, connection strings…) and 11 risky-code rules (`shell=True`, `eval`, string-built SQL, disabled TLS verification, unsafe deserialization, weak password hashing…).
+- **Full git history:** keys deleted from the code but still in history are flagged **GIT HISTORY ONLY**, with the commit, author and date.
+- **Few false positives:** entropy and format checks, context (tests, docs, vendor documentation examples such as the AWS example key are downgraded), an **ML classifier** (LightGBM + SHAP: 99.3 % recall vs 42.6 % for rules at the same precision), optional read-only **live verification** in CI, plus ignore files and a baseline for rotated keys.
+- **Rotate, don't just delete:** every finding explains why, and **✦ AI fix** gives a patch, the provider's rotation runbook and history clean-up steps. One-click **fix pull requests** on GitHub; *Store rotated key in vault*.
+- **Honeytokens:** plant fake keys or canary URLs; anyone who uses one triggers a CRITICAL alert with their IP.
 
-## What's new in 6.2
+### Incident Center
+Every finding moves through **DETECTED → TRIAGED → CONTAINED → ROTATED → VERIFIED** with a fix deadline by severity (CRITICAL 4 h · HIGH 24 h · MEDIUM 7 d · LOW 30 d), countdowns, time-to-contain, time-to-rotate and compliance %. Transitions are validated by the server and audited.
 
-| Feature | What it does |
-|---|---|
-| **Live privacy proof** | 🛡 button (bottom-left): every request the page sends, checked live for your password or its SHA-1 |
-| **Offline breach corpus** | 1M leaked passwords in a 1.8 MB Bloom filter, checked in the browser; not even the 5-char prefix leaves |
-| **Breach re-check at every login** | A password that leaks *after* signup locks the account into a password change |
-| **Password change with vault re-encryption** | The vault is decrypted and re-encrypted in the browser; the server never sees either password |
-| **Passkeys** | Sign in with fingerprint, face or PIN (WebAuthn); phishing-resistant |
-| **Honeytokens** | Bait keys and URLs: anyone who uses one triggers a CRITICAL alert with their IP |
-| **Fix deadlines** | CRITICAL 4 h · HIGH 24 h · MEDIUM 7 d countdowns, time-to-contain/rotate, compliance % |
-| **Alerts** | 🔔 in-app notifications, forwarded to Slack/Teams/Discord via `ALERT_WEBHOOK_URL` |
-| **GitHub** | Scan any repo by URL (full history); **one-click fix pull request** (`GITHUB_TOKEN`) |
-| **Drop-in widget** | `<privpass-password-field>`: add breach protection to any signup form with one tag (`/demo/acme`) |
-| **Demo simulations** | Admin-only panel in Command Center: simulate a breach or a login attack, then **remove all simulation data** in one click |
-| **Guided tour** | ▶ Guided tour on the Overview page walks judges through everything in 15 steps (signs in as the demo admin and loads sample data if needed) |
-| **Deploy** | `render.yaml` + `docs/DEPLOY.md` for a public HTTPS link (public demo mode) |
+### Exposure map
+An exposure score (0–100) with the factors behind it, an interactive attack-surface map (password, sign-in factors, sessions, vault, repositories, bait keys, alerts), **ranked attack paths** with one-click fixes, controls coverage and a timeline.
 
-## AI & ML (6.1)
+### Command Center (admins)
+Posture metrics, the **test-account breach audit** (accounts hashed in the browser; only counts are saved; CSV export), fix-deadline compliance, the account roster with breach-watch status, the security audit stream and demo simulations.
 
-| Model / feature | What it does | Result |
+### AI Lab
+| Model | What it does | Result |
 |---|---|---|
-| **Neural password model** (char-GRU, in-browser) | Estimates attacker guesses; never sends the password | 0 % of random passwords wrongly rated weak (rules: 91.5 %) |
-| **ML secret classifier** (LightGBM + SHAP) | Decides if a literal is a hardcoded credential and explains why | 99.3 % recall vs 42.6 % for rules, same precision |
-| **Login anomaly detector** (Isolation Forest) | Flags credential stuffing, brute force and enumeration | 97–100 % detection, 1 % false alarms (synthetic benchmark) |
-| **AI remediation copilot** | Patch, provider rotation runbook and history clean-up per finding | Claude, or offline engine |
-| **Hybrid triage** | ML decides clear cases; LLM explains the grey zone; never dismisses CRITICAL | |
-| **AI PR reviewer** | GitHub PR comment with a fix for each blocking finding | |
-| **Security copilot + incident report** | Tool-using assistant over read-only data; one-click postmortem | |
-| **Password coach** | Advice from analysis *flags* only | |
+| Secret classifier (LightGBM + SHAP) | Is this literal a real hardcoded credential, and why? | 99.3 % recall vs 42.6 % for rules |
+| Neural password model (char-GRU, in the browser) | Estimates attacker guesses | 0 % of random passwords wrongly rated weak (rules: 91.5 %) |
+| Login anomaly detector (Isolation Forest) | Flags credential stuffing, brute force and enumeration | 97–100 % detection, 1 % false alarms (synthetic benchmark) |
 
-Every AI call passes a redaction guard; the AI sees masked snippets like `<REDACTED:STRIPE_SECRET_KEY>`, never values.
-Set `ANTHROPIC_API_KEY` in `.env` to use Claude; without it everything runs in offline mode. Details: `docs/AI-ML.md`.
+Plus AI remediation, hybrid triage (the model decides clear cases; the LLM explains the grey zone and can never dismiss a CRITICAL), a security copilot over read-only data, one-click incident reports and an AI pull-request reviewer. **Every AI call passes a redaction guard**: the AI sees masked context such as `<REDACTED:STRIPE_SECRET_KEY>`, never values or passwords. With `ANTHROPIC_API_KEY` it uses Claude; without it an offline engine answers.
 
-## Quick start (Windows)
+### Platform
+- **Alerts** (🔔) for honeytoken trips, attacks, critical findings and breach locks; HIGH/CRITICAL can be forwarded to Slack, Teams or Discord.
+- **Demo and live workspaces:** demo accounts only ever see demo data; real accounts never see it. Every database query is filtered automatically.
+- **Drop-in widget:** `<privpass-password-field>` adds breach protection to any sign-up form with one tag (demo at `/demo/acme`).
+- **15-step guided tour**, dark and light themes, full phone layout, reduced-motion support, self-hosted fonts (works offline).
 
-1. Double-click `START-PRIVPASS.bat` and open `http://localhost:8000` (use `localhost`, not `127.0.0.1`, so passkeys work).
-2. Your **private real admin** login is printed by the launcher and saved in `runtime/ADMIN-CREDENTIALS.txt` (or set your own in `.env`).
-3. Demo credentials are in **Demo Center** (development only; they are a sandbox that only sees demo data):
-   - admin `admin@privpass.local` / `PrivPass!Demo#2026-Admin`
-   - analyst `analyst@privpass.local` / `PrivPass!Demo#2026-Analyst`
-   - vault user `user@privpass.local` / `PrivPass!Demo#2026-User`
+---
 
-Other scripts: `DOCTOR-PRIVPASS.bat`, `VERIFY-PRIVPASS.bat` (tests), `RESET-PRIVPASS.bat`, `STOP-PRIVPASS.bat`.
-Linux/macOS: `pip install -r requirements.txt && uvicorn app.main:app --port 8000`.
+## Privacy model
 
-## Judge demo (about 5 minutes)
+| Data | Stays in the browser | Sent to our server | Sent to HIBP | Sent to the AI |
+|---|---|---|---|---|
+| Password | ✔ | never | never | never |
+| Full SHA-1 of the password | ✔ | never | never | never |
+| First 5 characters of the SHA-1 | | ✔ (sealed at rest) | ✔ (k-anonymity) | never |
+| Login proof | derived | one-time HMAC proof | never | never |
+| Vault contents | ✔ (decrypted only here) | ciphertext only | never | never |
+| A leaked key found in code | | redacted preview + HMAC fingerprint | never | masked context only |
 
-1. **Password Shield**: run the benchmark, then **Check with HIBP**. Only a 5-character SHA-1 prefix leaves the browser.
-2. **Create account** with `password123`: it is blocked. Try a 12-character random password: blocked (below 15). Then a long unique passphrase: accepted after a *live* breach check.
-3. Sign in as admin, open **Command Center**, and click **Run on sample list**. 40 synthetic test accounts are hashed in the browser; the headline reads *"30 % of 40 test accounts use a breached password"*. Only counts go to the server.
-4. **SecretGuard**: upload `demo-assets/PrivPass-Demo-Leak-Repo.zip`. You'll see provider keys, risky code (`shell=True`, `verify=False`, string-built SQL), and the AWS *documentation* key downgraded to LOW.
-5. Upload `demo-assets/PrivPass-History-Leak-Repo.zip`. HEAD is clean, but two keys are flagged **GIT HISTORY ONLY**, with the commit and author that introduced them.
-6. **Incident Center**: move a finding DETECTED → TRIAGED → CONTAINED → ROTATED → VERIFIED.
-7. Expand a finding → **✦ AI fix**: a patch, the Stripe rotation runbook and the exact masked input the AI saw.
-8. **AI Lab**: model cards → **Simulate attack traffic** → ask the copilot *"Any login attacks in the last 24 hours?"* → **Generate report**.
-9. **Overview → ▶ Guided tour** for the full story in 15 steps. Open the **🛡 privacy proof** drawer while testing passwords.
-10. SecretGuard → **Honeytokens** → create one → *Simulate attacker* → watch the 🔔 CRITICAL alert.
-11. Account menu → **Security settings** → *Add a passkey* → sign out → **Sign in with a passkey**. (Password change needs your own account: demo accounts are shared, so their password is locked.)
-12. Open `/demo/acme` to show the drop-in widget protecting a (fictional) company's signup form.
-13. CLI: `RUN-SECRETGUARD-DEMO.bat`, or `python tools/secret_scan.py demo-assets/PrivPass-History-Leak-Repo.zip`, prints the rotation playbook and exits 1 (blocked).
+The full analysis, including what a modified browser can and cannot do, is in [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md).
 
-## Security claims and where they are proven
+---
 
-| Claim | Proof |
-|---|---|
-| No plaintext password or full hash leaves the browser | `docs/THREAT-MODEL.md` §1, `static/app.js` (`lookupHibp`, `deriveVerifier`) |
-| Reject-on-breach at signup and reset, fail-closed | `tests/test_v60_auth.py` (tickets, breached/unavailable/offline/short all rejected) |
-| NIST SP 800-63B alignment | `docs/NIST-800-63B.md` (requirement → code → test) |
-| CSRF, no account enumeration, single-use DB-backed challenges | `tests/test_v60_auth.py` |
-| Secrets in git history are found | `tests/test_v60_secretguard.py::test_history_finds_secret_deleted_from_head` |
-| Hostile repositories cannot make git execute code | `test_hostile_git_config_cannot_execute_commands` |
-| Project's own CI gate is green | `test_repository_self_scan_passes` |
+## Quick start
 
-What the breach gate can and cannot prove against a *modified* client is explained honestly in `docs/THREAT-MODEL.md` §2.
+**Windows (one click)**
+1. Install Python 3.10+ from python.org (tick *Add python.exe to PATH*).
+2. Double-click **`START-PRIVPASS.bat`**. The first run sets everything up; later runs start in seconds.
+3. Open **http://localhost:8000**. Use `localhost`, not `127.0.0.1`, so passkeys work.
+4. Stop the server with `STOP-PRIVPASS.bat`.
+
+Helper scripts in [`scripts/`](scripts): `VERIFY-PRIVPASS.bat` (tests), `DOCTOR-PRIVPASS.bat` (diagnostics), `RESET-PRIVPASS.bat` (clean start), `RUN-SECRETGUARD-DEMO.bat`, `INSTALL-SECRETGUARD-HOOK.bat` and `RUN-SECRETGUARD-HOOK-DEMO.bat`.
+
+**Linux / macOS**
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env            # optional: edit settings
+uvicorn app.main:app --port 8000
+```
+
+**Docker**
+```bash
+docker build -t privpass-shield .
+docker run -p 8000:8000 -e APP_SECRET=<long random string> \
+  -e PRIVPASS_ADMIN_EMAIL=you@example.com -e PRIVPASS_ADMIN_PASSWORD='<15+ character passphrase>' privpass-shield
+```
+
+---
+
+## Accounts and admin
+
+There is no role picker at sign-up: **every account people create is a normal user.** Admin access comes only from the server side.
+
+| Account | How to get it | Sees |
+|---|---|---|
+| **Real admin** | Set `PRIVPASS_ADMIN_EMAIL` and `PRIVPASS_ADMIN_PASSWORD` (15+ characters) in `.env`, or let the first start generate one: it is printed in the console and saved to `runtime/ADMIN-CREDENTIALS.txt`. `python tools/admin_account.py --reset` creates a new password. | Real accounts only; never listed in the Demo Center |
+| **Your own accounts** | *Sign in → Create account* | Their own data |
+| Demo admin | `admin@privpass.local` / `PrivPass!Demo#2026-Admin` | Demo data only |
+| Demo analyst | `analyst@privpass.local` / `PrivPass!Demo#2026-Analyst` | Demo data only |
+| Demo user | `user@privpass.local` / `PrivPass!Demo#2026-User` | Demo data only |
+
+Demo accounts are a shared sandbox: they can't change their password or manage users, simulations only run there, and they never send real alerts. Try password change, reset and the breach lock with an account you create yourself.
+
+`runtime/` and `.env` are git-ignored, so the admin password and the local database never reach the repository.
+
+---
+
+## Configuration
+
+Copy `.env.example` to `.env`. Everything is optional for local use.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `PRIVPASS_ADMIN_EMAIL` / `PRIVPASS_ADMIN_PASSWORD` | generated | Your private real admin (required in production). |
+| `APP_SECRET` | generated | Signs sessions and encrypts stored verifiers. Keep it stable. |
+| `ANTHROPIC_API_KEY` | empty | Use Claude for the AI features (offline engine otherwise). |
+| `GITHUB_TOKEN` | empty | Private-repository scans and one-click fix pull requests. |
+| `ALERT_WEBHOOK_URL` | empty | Forward HIGH/CRITICAL alerts to Slack, Teams or Discord. |
+| `PRIVPASS_BREACH_WATCH_MINUTES` | `360` | How often every account is re-checked (`0` = only at sign-in / on demand). |
+| `PRIVPASS_BREACH_FALLBACK` | empty | `local` accepts the offline corpus when HIBP is down (default: refuse). |
+| `APP_ENV` | `development` | `production` enables production security. |
+| `PRIVPASS_PUBLIC_DEMO` / `PRIVPASS_DEMO_AUTOSEED` | `false` | Keep the demo sandbox in production / load sample data automatically. |
+| `DATABASE_URL` | SQLite in `runtime/` | PostgreSQL in production. |
+| `REDIS_URL` | empty | Shared rate limiting across several app instances. |
+| `COOKIE_SECURE` | `false` | HTTPS-only cookies (set `true` behind HTTPS). |
+
+---
+
+## 5-minute demo
+
+1. **Home:** type into the *Try it* card and watch only 5 hash characters get highlighted; open the 🛡 privacy drawer.
+2. **Create account** with `password123` → blocked. A long unique passphrase → accepted after the server's breach check.
+3. **Command Center** (demo admin) → *Run on sample list* → *"30 % of 40 test accounts use a breached password"*.
+4. **SecretGuard** → upload `demo-assets/PrivPass-History-Leak-Repo.zip` → keys flagged **GIT HISTORY ONLY** → expand one → **✦ AI fix**.
+5. **Incident Center** → move a finding DETECTED → … → VERIFIED.
+6. **Exposure** → hover the red nodes → *Fix →* on an attack path.
+7. **Command Center** → *Password found in a new breach* on the demo user → that user's browser shows *"Account locked"*. *Remove simulation data* undoes it.
+8. **AI Lab** → *Simulate attack traffic* → ask the copilot → *Generate report*.
+
+Or press **▶ Guided tour** on the Overview page: it signs in as the demo admin, loads sample data and walks through everything in 15 steps.
+
+---
 
 ## SecretGuard in CI
 
 ```bash
-python tools/secret_scan.py .            # working tree: secrets + risky code
-python tools/secret_scan.py . --history  # every commit on every ref
-python tools/secret_scan.py --staged     # pre-commit
-python tools/secret_scan.py . --verify   # opt-in live provider verification (CI only)
+python tools/secret_scan.py .                   # working tree: secrets + risky code
+python tools/secret_scan.py . --history         # every commit on every ref
+python tools/secret_scan.py --staged            # pre-commit (reads the git index)
+python tools/secret_scan.py . --verify          # opt-in live provider verification (CI only)
+python tools/secret_scan.py . --write-baseline  # record fingerprints of ROTATED keys
 ```
 
-`.github/workflows/secretguard.yml` checks out full history, scans the tree and the history, uploads SARIF, comments on the PR, and fails the **SecretGuard gate** check. Bandit blocks; Semgrep reports. To make a failure block the merge, mark the checks as *required* in a branch ruleset. See `docs/SECRETGUARD-CI.md`.
+[`.github/workflows/secretguard.yml`](.github/workflows/secretguard.yml) checks out full history, scans the tree and the history, uploads **SARIF** to GitHub code scanning, comments on the pull request with fixes, and fails the **SecretGuard gate** check (Bandit also blocks; Semgrep reports). Mark the checks as *required* in branch protection to block merges. A blocking scan exits with code 1 and prints the rotation playbook.
 
-False-positive controls: `.secretguardignore`, inline `# secretguard:allow`, and `.secretguard-baseline.json` for **rotated** fingerprints (`--write-baseline`).
+False-positive controls: `.secretguardignore`, inline `# secretguard:allow`, and `.secretguard-baseline.json` for rotated fingerprints. Details: [`docs/SECRETGUARD-CI.md`](docs/SECRETGUARD-CI.md).
 
-## Zero-knowledge vault
+---
 
-Each signed-in user gets a private vault encrypted in the browser (AES-GCM-256, PBKDF2-SHA-256 with 600k iterations). The server stores only ciphertext. Admins see counts, never contents. A forgot-password reset clears the vault by design, because no server recovery key exists.
+## Security claims and proofs
 
-## Architecture and scaling
+| Claim | Where it is proven |
+|---|---|
+| No password or full hash leaves the browser | Live privacy drawer; `docs/THREAT-MODEL.md` §1; `tests/test_auth.py` |
+| The server refuses breached passwords even if the browser says "safe" | `tests/test_features.py::test_server_rejects_breached_password_even_if_the_browser_says_safe` |
+| A lying browser can't sign in with a breached password | `tests/test_features.py::test_a_lying_browser_cannot_sign_in_with_the_breached_password` |
+| Accounts are locked even when nobody is signed in | `tests/test_features.py::test_background_sweep_locks_accounts_that_are_not_signed_in`, `tests/test_breach_lock.py` |
+| A stolen database alone doesn't help crack passwords | `tests/test_breach_lock.py` (storage test) |
+| Fail-closed gate, CSRF, no enumeration, single-use challenges | `tests/test_auth.py` |
+| Secrets deleted from HEAD are still found in history | `tests/test_secretguard_history.py::test_history_finds_secret_deleted_from_head` |
+| Hostile repositories can't make git run code | `tests/test_secretguard_history.py::test_hostile_git_config_cannot_execute_commands` |
+| Secrets never reach the AI | `tests/test_ai.py` (redaction guard) |
+| Demo and real data never mix | `tests/test_workspaces.py` |
+| NIST SP 800-63B alignment | [`docs/NIST-800-63B.md`](docs/NIST-800-63B.md) (requirement → code → test) |
 
-FastAPI + SQLAlchemy (SQLite locally, PostgreSQL in production), optional Redis rate limiting, and vanilla JS. Challenges and tickets live in the database, so multiple workers work. See `docs/ARCHITECTURE.md` and `deploy/SCALING.md`.
+---
+
+## Tech stack
+
+| Layer | Technologies |
+|---|---|
+| Front end | Vanilla JavaScript, HTML, CSS (no framework, no CDN); Web Crypto (SHA-1, PBKDF2, HMAC, AES-GCM); WebAuthn; Web Components; Canvas animations |
+| Back end | Python, FastAPI, Uvicorn, Pydantic, SQLAlchemy 2, `cryptography`, `argon2-cffi`, `py_webauthn`, `httpx` |
+| Data | SQLite (local), PostgreSQL (production), Redis (optional) |
+| ML | Character-level GRU (trained with NumPy, int8, runs in JS), zxcvbn-style word & name model, Bloom filter, LightGBM + SHAP, scikit-learn Isolation Forest |
+| AI | Anthropic Claude (optional) with an offline fallback engine |
+| Security data | Have I Been Pwned range API (k-anonymity, padded) |
+| DevOps | GitHub Actions, SARIF, Bandit, Semgrep, Docker, Render blueprint |
+| Testing | pytest, FastAPI TestClient |
+
+---
+
+## Project structure
+
+```text
+app/            FastAPI server: auth, breach watch, SecretGuard engine, incidents, exposure, AI, ML
+static/         Web app (HTML/CSS/JS), password models, offline breach corpus, widget, fonts
+tools/          SecretGuard CLI, pre-commit installer, launcher, admin tool, model/data builders
+tests/          Automated tests
+docs/           Threat model, NIST mapping, AI/ML, vault, SecretGuard CI, deployment
+ml/             Model training scripts and model cards
+data/           Synthetic demo repositories and the sample test-account list
+demo-assets/    Ready-made demo ZIPs (leaky repo, history-only leak, clean repo)
+scripts/        Windows helper scripts
+deploy/         Docker Compose (PostgreSQL + Redis) and an Nginx example
+.github/        CI and the SecretGuard merge gate
+```
+
+All keys in `data/` and `demo-assets/` are fake and exist only to demonstrate the scanner.
+
+---
 
 ## Tests
 
 ```bash
-pip install -r requirements.txt && pytest -q && python tools/ui_check.py
+pip install -r requirements.txt
+pytest -q                                   # automated tests (uses its own database)
+python tools/ui_check.py                    # UI integrity check
+python tools/secret_scan.py . --fail-on high  # the project passes its own gate
 ```
+On Windows: `scripts\VERIFY-PRIVPASS.bat`.
+
+---
+
+## Deployment
+
+[`render.yaml`](render.yaml) deploys a public demo on Render with production security (secure cookies, no reset tokens in responses) and the demo sandbox. Push to GitHub → render.com → **New → Blueprint** → set `PRIVPASS_ADMIN_EMAIL` and `PRIVPASS_ADMIN_PASSWORD` → open the URL. Step by step, plus self-hosting with PostgreSQL/Redis and scaling notes: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+---
+
+## Limitations
+
+- The 15-character minimum is enforced in the browser; the server can't measure a password it never sees (a modified browser could choose a short, **non-breached** password for its own account).
+- Someone holding both the database **and** `APP_SECRET` can test guesses against the breach-watch value faster than against the login verifier; that is the cost of re-checking accounts while nobody is signed in.
+- No email service is included: in development, reset links appear on screen; a public deployment needs email delivery.
+- MFA (TOTP) is available through the API but has no screen yet.
+- The login-attack benchmark numbers are from synthetic traffic and are labelled as such.
+
+---
+
+## Documentation
+
+| Document | Covers |
+|---|---|
+| [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) | What is protected, how, and the honest trade-offs |
+| [`docs/NIST-800-63B.md`](docs/NIST-800-63B.md) | NIST requirement → code → test |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Components and data flow |
+| [`docs/AI-ML.md`](docs/AI-ML.md) | Models, training data, evaluation, AI guardrails |
+| [`docs/VAULT.md`](docs/VAULT.md) | Zero-knowledge vault design |
+| [`docs/SECRETGUARD-CI.md`](docs/SECRETGUARD-CI.md) | CLI, pre-commit hook, GitHub Actions gate |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Putting it online, self-hosting and scaling |
+| [`SECURITY.md`](SECURITY.md) | Security notes |
+
+## License
+
+[MIT](LICENSE)

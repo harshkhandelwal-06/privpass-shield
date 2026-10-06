@@ -1,8 +1,8 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0.."
 if exist ".venv\Scripts\python.exe" (
-  ".venv\Scripts\python.exe" "%~dp0tools\ui_check.py"
+  ".venv\Scripts\python.exe" "%~dp0..\tools\ui_check.py"
   if errorlevel 1 goto :fail
   ".venv\Scripts\python.exe" -m pytest -q
   if errorlevel 1 goto :fail
