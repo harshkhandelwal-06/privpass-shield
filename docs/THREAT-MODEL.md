@@ -18,7 +18,7 @@ database thief who had both the prefix and the verifier could discard about 99.9
 with cheap SHA-1 before paying for PBKDF2. Keeping the prefix out of the server keeps the verifier's
 full work factor.
 
-## 2. Reject-on-breach: enforced by the server, without the server seeing the password (7.3)
+## 2. Reject-on-breach: enforced by the server, without the server seeing the password
 
 **Goal:** no one can sign in with a breached password, and an account whose password appears in a breach is
 locked (every session ends) until the password is reset, whether or not the person is signed in.
@@ -49,7 +49,7 @@ locked (every session ends) until the password is reset, whether or not the pers
 - Report nothing and just log in: the server re-checks the **stored** value itself at sign-in (uncached), so
   nothing is taken from the browser.
 
-`tests/test_v62_features.py::test_a_lying_browser_cannot_sign_in_with_the_breached_password` covers both lies.
+`tests/test_features.py::test_a_lying_browser_cannot_sign_in_with_the_breached_password` covers both lies.
 
 **Continuous protection** (`breach_watch_sweep`):
 
@@ -83,7 +83,7 @@ is signed in. Keep `APP_SECRET` out of the database and backups.
   a breach lock requires a reset instead of letting the (possibly stolen) old password change itself.
 - In production, reset links need an email service (not included in this build); development mode shows the
   link on screen.
-- Legacy (pre-7.3) accounts are upgraded and checked at their next sign-in. Until then the scheduled watch
+- Accounts created before the server-side check existed are upgraded and checked at their next sign-in. Until then the scheduled watch
   can't check them, and `/challenge` reveals that such an account is on the old scheme.
 
 ## 3. SecretGuard

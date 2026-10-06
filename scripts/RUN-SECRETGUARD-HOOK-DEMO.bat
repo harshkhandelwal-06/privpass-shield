@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0.."
 echo ======================================================
 echo PRIVPASS SECRETGUARD - PRE-COMMIT BLOCK/PASS DEMO
 echo ======================================================
@@ -16,7 +16,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-set "DEMO=%~dp0data\precommit-demo-repo"
+set "DEMO=%~dp0..\data\precommit-demo-repo"
 cd /d "%DEMO%"
 if not exist "leak-demo.py" (
   >"leak-demo.py" echo AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
@@ -51,7 +51,7 @@ if "%PASS_RC%"=="0" (
 )
 
 echo.
-cd /d "%~dp0"
+cd /d "%~dp0.."
 echo Finished SecretGuard pre-commit demonstration.
 pause
 exit /b 0
