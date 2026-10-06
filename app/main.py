@@ -251,10 +251,11 @@ app.router.lifespan_context = lifespan
 @app.get("/", response_class=HTMLResponse)
 def home(): return FileResponse(STATIC / "index.html")
 
-@app.get("/api/health")
+# HEAD is accepted too: uptime monitors (e.g. UptimeRobot) check with HEAD requests.
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 def health(): return {"status":"ok","version":"7.3.0","env":APP_ENV,"demo":cfg.demo_enabled()}
 
-@app.get("/api/ready")
+@app.api_route("/api/ready", methods=["GET", "HEAD"])
 def ready(session: Session = Depends(db)):
     session.execute(select(func.count(User.id))).scalar_one()
     return {"status":"ready","database":"ok"}
