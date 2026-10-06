@@ -1,7 +1,7 @@
 from __future__ import annotations
 from contextlib import contextmanager
 from contextvars import ContextVar
-from sqlalchemy import create_engine, event, inspect, text
+from sqlalchemy import bindparam, create_engine, event, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session as OrmSession, sessionmaker, with_loader_criteria
 from .config import DATABASE_URL
 
@@ -108,15 +108,16 @@ def _ensure_workspace_columns() -> None:
                 added.append(t)
         if not added:
             return
-        demo_list = ", ".join(f"'{e}'" for e in DEMO_EMAILS)
         if "users" in added:
-            conn.execute(text(f"UPDATE users SET workspace='live' WHERE email NOT IN ({demo_list})"))
+            stmt = text("UPDATE users SET workspace='live' WHERE email NOT IN :demo").bindparams(bindparam("demo", expanding=True))
+            conn.execute(stmt, {"demo": list(DEMO_EMAILS)})
         live_ids = "SELECT id FROM users WHERE workspace='live'"
         for t, col in (("password_events", "user_id"), ("scans", "owner_user_id"), ("secret_findings", "owner_user_id"),
                        ("audit_events", "user_id"), ("account_audit_reports", "owner_user_id"), ("notifications", "user_id"),
                        ("honeytokens", "owner_user_id")):
             if t in added:
-                conn.execute(text(f"UPDATE {t} SET workspace='live' WHERE {col} IN ({live_ids})"))
+                # Table and column names can't be bound parameters; both come from the fixed tuple above, never from input.
+                conn.execute(text(f"UPDATE {t} SET workspace='live' WHERE {col} IN ({live_ids})"))  # nosec B608
         if "honeytoken_trips" in added:
             conn.execute(text("UPDATE honeytoken_trips SET workspace=(SELECT workspace FROM honeytokens h WHERE h.id=honeytoken_trips.honeytoken_id)"))
 
