@@ -64,3 +64,12 @@ def test_password_model_calibration_examples():
     assert analyze('3492847592039485720')['score'] < 70
     assert analyze('river lantern copper orbit')['score'] >= 85
     assert analyze('idsfiwefi38y238@dbf1412314@fhiw&dfihwif*jcowjf^^^iqhfiwhef7&')['score'] >= 85
+
+
+def test_health_answers_head_requests_for_uptime_monitors():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    with TestClient(app) as c:
+        assert c.head("/api/health").status_code == 200
+        assert c.head("/api/ready").status_code == 200
+        assert c.get("/api/health").json()["status"] == "ok"
