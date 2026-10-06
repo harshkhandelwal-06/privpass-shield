@@ -15,10 +15,14 @@ sys.path.insert(0, str(ROOT))
 runtime = ROOT / "runtime"
 runtime.mkdir(exist_ok=True)
 # Tests use their own database file, so running scripts\VERIFY-PRIVPASS.bat never touches your real accounts or data.
+# Set PRIVPASS_TEST_DATABASE_URL to run the same suite against an empty PostgreSQL database instead.
 db = runtime / "privpass-test.db"
-os.environ["DATABASE_URL"] = f"sqlite:///{db.as_posix()}"
-if db.exists():
-    db.unlink()
+if os.getenv("PRIVPASS_TEST_DATABASE_URL"):
+    os.environ["DATABASE_URL"] = os.environ["PRIVPASS_TEST_DATABASE_URL"]
+else:
+    os.environ["DATABASE_URL"] = f"sqlite:///{db.as_posix()}"
+    if db.exists():
+        db.unlink()
 
 # ---- test helpers -------------------------------------------------------------------------
 # The API enforces CSRF on every state-changing request. This TestClient subclass behaves like

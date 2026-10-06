@@ -98,7 +98,7 @@ def test_old_must_change_flags_become_locks_on_upgrade():
     email = "flagged-" + os.urandom(3).hex() + "@example.com"
     _legacy_user(email, "old flagged passphrase 2026")
     with dbmod.engine.begin() as conn:
-        conn.execute(text("UPDATE users SET must_change_password = 1 WHERE email = :e"), {"e": email})
+        conn.execute(text("UPDATE users SET must_change_password = :t WHERE email = :e"), {"t": True, "e": email})
     dbmod._carry_over_breach_flags()
     u = _user(email)
     assert u.breach_locked is True and not u.must_change_password

@@ -61,6 +61,7 @@ def ensure_demo_admin():
         admin = ensure_demo_user(s, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, "admin")
         analyst = ensure_demo_user(s, DEMO_ANALYST_EMAIL, DEMO_ANALYST_PASSWORD, "analyst")
         demo_user = ensure_demo_user(s, DEMO_USER_EMAIL, DEMO_USER_PASSWORD, "user")
+        s.flush()   # write the accounts before rows that reference them (PostgreSQL enforces foreign keys)
         # No synthetic password telemetry is seeded: every metric in the Command Center comes from
         # real breach-gate attempts or an explicit test-account audit.
         s.add(AuditEvent(id=uid(), user_id=admin.id, event_type="DEMO_ENV_READY", severity="INFO", metadata_json='{"accounts":3}', workspace=DEMO))
