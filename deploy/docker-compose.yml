@@ -1,6 +1,6 @@
 services:
   api:
-    build: .
+    build: ..
     environment:
       APP_ENV: production
       DATABASE_URL: postgresql+psycopg://privpass:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/privpass

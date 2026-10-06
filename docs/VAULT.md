@@ -1,4 +1,4 @@
-# PrivPass Shield 5.6 — Zero-Knowledge Password Manager
+# Zero-knowledge vault
 
 ## Threat model
 The vault is designed so the PrivPass application server, database administrator and normal admin console cannot recover saved vault passwords from stored records.

@@ -98,7 +98,7 @@ def main() -> int:
         return 2
     if args.demo:
         print(f"Demo repo ready: {target}")
-        print("Next: run RUN-SECRETGUARD-HOOK-DEMO.bat to test block/pass behavior.")
+        print("Next: run scripts\\RUN-SECRETGUARD-HOOK-DEMO.bat to test block/pass behavior.")
     return 0
 
 

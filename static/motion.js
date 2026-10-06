@@ -1,4 +1,4 @@
-// PrivPass Shield 7.0 — motion layer. Loaded last; purely presentational.
+// PrivPass Shield — motion layer. Loaded last; purely presentational.
 // Everything here is progressive: if this file fails, the app still works.
 // Respects prefers-reduced-motion, and stays static under automation (navigator.webdriver)
 // so end-to-end tests see final states instead of mid-animation frames.

@@ -76,3 +76,17 @@ docker run -p 8000:8000 -e APP_ENV=production -e PRIVPASS_PUBLIC_DEMO=true -e PR
 ```
 The container honours `$PORT`, trusts the proxy's `X-Forwarded-Proto` (needed for passkeys behind HTTPS), and
 `.dockerignore` keeps `.env` and `runtime/` out of the image.
+
+## Self-hosted with PostgreSQL and Redis
+`deploy/docker-compose.yml` runs the app with PostgreSQL and Redis (set `POSTGRES_PASSWORD` and `APP_SECRET` in `.env`):
+```bash
+docker compose -f deploy/docker-compose.yml up -d --build
+```
+`deploy/nginx.conf` is an example reverse proxy (TLS termination, forwarding headers).
+
+## Scaling to many users
+- Run 2+ app replicas behind Nginx or a load balancer. Workers are stateless: challenges, tickets and sessions live in the database.
+- Use PostgreSQL with connection pooling, and Redis (`REDIS_URL`) so rate limits are shared across replicas.
+- Terminate TLS at the edge and set `COOKIE_SECURE=true`; keep `APP_SECRET` identical on every replica.
+- Move scan uploads to object storage if repositories outgrow the 25 MB upload limit; static files can go to a CDN.
+- Autoscale on CPU and request latency.
