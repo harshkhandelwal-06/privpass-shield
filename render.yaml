@@ -19,7 +19,7 @@ services:
       - key: COOKIE_SECURE
         value: "true"
       - key: DATABASE_URL
-        value: sqlite:////app/runtime/privpass.db   # resets when the instance restarts; use Postgres to keep data
+        sync: false                 # paste a PostgreSQL URL (e.g. Neon's) to keep data; empty = SQLite, reset on every restart
       - key: PRIVPASS_ADMIN_EMAIL
         sync: false                 # your private real admin (never shown in the Demo Center)
       - key: PRIVPASS_ADMIN_PASSWORD

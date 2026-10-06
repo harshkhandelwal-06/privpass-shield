@@ -40,7 +40,7 @@ class User(Base):
 class Session(Base):
     __tablename__ = "sessions"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", deferrable=True, initially="DEFERRED"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     csrf_token: Mapped[str] = mapped_column(String(64))
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
@@ -51,7 +51,7 @@ class PasswordEvent(Base):
     __tablename__ = "password_events"
     workspace: Mapped[str] = mapped_column(String(10), default=default_workspace, index=True)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", deferrable=True, initially="DEFERRED"), nullable=True)
     event_type: Mapped[str] = mapped_column(String(40))
     breached: Mapped[bool] = mapped_column(Boolean, default=False)
     score: Mapped[int] = mapped_column(Integer, default=0)
@@ -63,7 +63,7 @@ class Scan(Base):
     __tablename__ = "scans"
     workspace: Mapped[str] = mapped_column(String(10), default=default_workspace, index=True)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", deferrable=True, initially="DEFERRED"), nullable=True)
     repo_name: Mapped[str] = mapped_column(String(200))
     file_count: Mapped[int] = mapped_column(Integer, default=0)
     finding_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -76,8 +76,8 @@ class SecretFinding(Base):
     __tablename__ = "secret_findings"
     workspace: Mapped[str] = mapped_column(String(10), default=default_workspace, index=True)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    scan_id: Mapped[str] = mapped_column(ForeignKey("scans.id"), index=True)
-    owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    scan_id: Mapped[str] = mapped_column(ForeignKey("scans.id", deferrable=True, initially="DEFERRED"), index=True)
+    owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", deferrable=True, initially="DEFERRED"), nullable=True)
     file_path: Mapped[str] = mapped_column(String(500))
     line_no: Mapped[int] = mapped_column(Integer, default=0)
     secret_type: Mapped[str] = mapped_column(String(80))
@@ -111,7 +111,7 @@ class AuditEvent(Base):
     __tablename__ = "audit_events"
     workspace: Mapped[str] = mapped_column(String(10), default=default_workspace, index=True)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", deferrable=True, initially="DEFERRED"), nullable=True)
     event_type: Mapped[str] = mapped_column(String(80))
     severity: Mapped[str] = mapped_column(String(20), default="INFO")
     metadata_json: Mapped[str] = mapped_column(Text, default="{}")
@@ -125,7 +125,7 @@ class VaultItem(Base):
     """
     __tablename__ = "vault_items"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE", deferrable=True, initially="DEFERRED"), index=True)
     ciphertext_b64: Mapped[str] = mapped_column(Text)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
@@ -150,7 +150,7 @@ class AccountAuditReport(Base):
     __tablename__ = "account_audit_reports"
     workspace: Mapped[str] = mapped_column(String(10), default=default_workspace, index=True)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", deferrable=True, initially="DEFERRED"), nullable=True)
     source_name: Mapped[str] = mapped_column(String(200))
     total: Mapped[int] = mapped_column(Integer, default=0)
     breached: Mapped[int] = mapped_column(Integer, default=0)
@@ -192,7 +192,7 @@ class Honeytoken(Base):
     __tablename__ = "honeytokens"
     workspace: Mapped[str] = mapped_column(String(10), default=default_workspace, index=True)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", deferrable=True, initially="DEFERRED"), index=True)
     label: Mapped[str] = mapped_column(String(120))
     kind: Mapped[str] = mapped_column(String(30))
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
@@ -206,7 +206,7 @@ class HoneytokenTrip(Base):
     __tablename__ = "honeytoken_trips"
     workspace: Mapped[str] = mapped_column(String(10), default=default_workspace, index=True)
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    honeytoken_id: Mapped[str] = mapped_column(ForeignKey("honeytokens.id", ondelete="CASCADE"), index=True)
+    honeytoken_id: Mapped[str] = mapped_column(ForeignKey("honeytokens.id", ondelete="CASCADE", deferrable=True, initially="DEFERRED"), index=True)
     ip: Mapped[str] = mapped_column(String(64))
     user_agent: Mapped[str] = mapped_column(String(300), default="")
     path: Mapped[str] = mapped_column(String(300), default="")
@@ -216,7 +216,7 @@ class Passkey(Base):
     """WebAuthn credential (public key only)."""
     __tablename__ = "passkeys"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE", deferrable=True, initially="DEFERRED"), index=True)
     credential_id: Mapped[str] = mapped_column(String(512), unique=True, index=True)
     public_key: Mapped[str] = mapped_column(Text)
     sign_count: Mapped[int] = mapped_column(Integer, default=0)

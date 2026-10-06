@@ -24,7 +24,12 @@ HOST = env("HOST", "127.0.0.1")
 PORT = int(env("PORT", "8000"))
 APP_SECRET = env("APP_SECRET") or secrets.token_urlsafe(48)
 COOKIE_SECURE = env("COOKIE_SECURE", "false").lower() == "true"
-DATABASE_URL = env("DATABASE_URL", f"sqlite:///{RUNTIME / 'privpass.db'}")
+DATABASE_URL = env("DATABASE_URL", "").strip() or f"sqlite:///{RUNTIME / 'privpass.db'}"
+# Hosted Postgres (Neon, Render, Railway, Supabase) hands out postgres:// or postgresql:// URLs;
+# SQLAlchemy needs the driver named, and this project ships psycopg 3.
+for _prefix in ("postgres://", "postgresql://"):
+    if DATABASE_URL.startswith(_prefix):
+        DATABASE_URL = "postgresql+psycopg://" + DATABASE_URL[len(_prefix):]
 REDIS_URL = env("REDIS_URL", "")
 HIBP_USER_AGENT = env("HIBP_USER_AGENT", "PrivPass-Shield/6.0")
 MAX_SCAN_MB = int(env("MAX_SCAN_MB", "25"))
