@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+cd "$ROOT"
+
+if [ -x "$ROOT/.venv/bin/python" ]; then
+  PY="$ROOT/.venv/bin/python"
+elif [ -x "$ROOT/.venv/Scripts/python.exe" ]; then
+  PY="$ROOT/.venv/Scripts/python.exe"
+elif command -v python3 >/dev/null 2>&1; then
+  PY="$(command -v python3)"
+elif command -v python >/dev/null 2>&1; then
+  PY="$(command -v python)"
+else
+  echo "PrivPass SecretGuard: Python 3 is required for the pre-commit scan." >&2
+  exit 1
+fi
+
+"$PY" tools/secret_scan.py --staged --fail-on high --min-confidence 0.80

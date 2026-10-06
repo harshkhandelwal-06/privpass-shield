@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>PrivPass Shield — Continuous Identity &amp; Credential Exposure Defense</title>
+<meta content="Prevent compromised passwords, detect leaked credentials, correlate exposure and guide remediation from one security command center." name="description"/>
+<link href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23081513'/%3E%3Cpath d='M32 8 52 15v15c0 14-8 24-20 28C20 54 12 44 12 30V15z' fill='%2326e1c3' fill-opacity='.2' stroke='%2326e1c3' stroke-width='3'/%3E%3Cpath d='m23 31 7 7 12-15' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" rel="icon"/>
+<link href="/static/styles.css?v=7.3.0" rel="stylesheet"/>
+</head>
+<body>
+<div class="preloader" id="preloader" aria-hidden="true"><div class="pre-inner"><div class="pre-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5 27 6.6v8.2c0 7.4-4.6 12.6-11 14.7C9.6 27.4 5 22.2 5 14.8V6.6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m11 15.8 3.6 3.6L21.4 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="pre-word"><span>Priv</span><span>Pass</span></div><div class="pre-count"><b id="pre-num">000</b><small>initialising local crypto</small></div></div><div class="pre-bar"><i id="pre-bar"></i></div></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"><div class="cursor-ring"><span class="cursor-label" id="cursor-label"></span></div><div class="cursor-dot"></div></div>
+<div class="scroll-progress" aria-hidden="true"><i id="scroll-progress"></i></div>
+<header class="topbar" id="topbar">
+<button aria-label="Go to overview" class="brand" data-nav="overview"><span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5 27 6.6v8.2c0 7.4-4.6 12.6-11 14.7C9.6 27.4 5 22.2 5 14.8V6.6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="m11 15.8 3.6 3.6L21.4 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="brand-word">PrivPass<i>Shield</i></span></button>
+<nav aria-label="Primary navigation" class="topnav" id="topnav"><span aria-hidden="true" class="nav-indicator" id="nav-indicator"></span><button data-nav="overview">Overview</button><button data-nav="password">Passwords</button><button data-nav="vault">Vault</button><button data-nav="secrets">SecretGuard</button><button data-nav="exposure">Exposure</button><button data-nav="incidents">Incidents</button><button data-nav="command" data-role-min="admin">Command</button><button data-nav="ai">AI Lab</button><button data-nav="demo">Demo</button></nav>
+<div class="top-actions"><div class="bell hidden" id="bell"><button aria-label="Notifications" class="icon-btn" id="bell-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span class="bell-count hidden" id="bell-count">0</span></button>
+<div class="bell-dropdown" id="bell-dropdown"><div class="bell-head"><b>Alerts</b><span class="dd-head-actions"><button class="link-btn" id="bell-read">Mark all read</button><button aria-label="Close" class="dd-close" data-close-dropdown="" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></span></div><div class="bell-list" id="bell-list"><div class="empty-state">No alerts yet.</div></div><small class="bell-foot">Set <code>ALERT_WEBHOOK_URL</code> to forward HIGH/CRITICAL alerts to Slack, Teams or Discord.</small></div></div>
+<button aria-label="Toggle theme" class="icon-btn theme-btn" id="theme-toggle"><svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><button class="btn primary" id="login-open">Sign in</button>
+<span class="ws-pill hidden" id="ws-pill" title="You are signed in to the shared demo workspace: you only see demo data, and account changes are disabled.">Demo workspace</span><div class="account-menu hidden" id="account-menu"><button aria-expanded="false" aria-haspopup="menu" class="account-chip" id="account-chip"><span class="avatar" id="account-avatar">?</span><span class="account-chip-text"><b id="account-email">—</b><small id="account-role">—</small></span><span aria-hidden="true" class="chev">▾</span></button>
+<div class="account-dropdown" id="account-dropdown" role="menu"><div class="account-dropdown-head"><span class="avatar lg" id="account-avatar-lg">?</span><div><b id="account-email-lg">—</b><small id="account-meta">—</small></div><button aria-label="Close" class="dd-close" data-close-dropdown="" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+<button id="open-security" role="menuitem">Security settings · passkeys</button><button data-nav-account="vault" role="menuitem">Open my vault</button><button data-nav-account="command" data-role-min="admin" role="menuitem">Command Center</button><button data-nav-account="ai" role="menuitem">AI Lab</button>
+<div class="account-sep"></div><button class="signout" id="sign-out" role="menuitem">Sign out</button></div></div>
+<button aria-controls="menu-overlay" aria-expanded="false" class="menu-btn" id="menu-btn" type="button"><span class="menu-lines" aria-hidden="true"><i></i><i></i></span><span class="menu-txt">Menu</span></button></div>
+</header>
+<div aria-hidden="true" class="menu-overlay" id="menu-overlay"><div class="menu-inner"><div class="menu-kicker mono">Navigate</div><div class="menu-links"><button class="menu-link" data-nav="overview"><span class="menu-no"></span><span class="menu-name">Overview</span><small>Start here</small></button><button class="menu-link" data-nav="password"><span class="menu-no"></span><span class="menu-name">Password Shield</span><small>Guessability + breach gate</small></button><button class="menu-link" data-nav="vault"><span class="menu-no"></span><span class="menu-name">Vault</span><small>Zero-knowledge storage</small></button><button class="menu-link" data-nav="secrets"><span class="menu-no"></span><span class="menu-name">SecretGuard</span><small>Leaked keys, blocked at merge</small></button><button class="menu-link" data-nav="exposure"><span class="menu-no"></span><span class="menu-name">Exposure Graph</span><small>One identity story</small></button><button class="menu-link" data-nav="incidents"><span class="menu-no"></span><span class="menu-name">Incident Center</span><small>Detect → verify</small></button><button class="menu-link" data-nav="command" data-role-min="admin"><span class="menu-no"></span><span class="menu-name">Command Center</span><small>Posture + simulations</small></button><button class="menu-link" data-nav="ai"><span class="menu-no"></span><span class="menu-name">AI Lab</span><small>Models that never see a secret</small></button><button class="menu-link" data-nav="demo"><span class="menu-no"></span><span class="menu-name">Demo Center</span><small>Judge accounts + assets</small></button></div><div class="menu-foot mono"><span>k-anonymity · NIST 800-63B · zero-knowledge</span><span>v7.3</span></div></div></div>
+<main class="shell" id="shell">
+<section class="view active" id="view-overview">
+<section class="hero" id="hero">
+<canvas aria-hidden="true" class="hex-field" id="hex-field"></canvas>
+<div class="hero-glow" aria-hidden="true"></div>
+<div class="hero-inner">
+<div class="hero-top"><span class="eyebrow"><span class="dot"></span>Live · privacy-preserving defense</span></div>
+<div class="hero-copy">
+<h1 class="hero-title"><span class="ln"><span>Stop the leak</span></span> <span class="ln"><span><em>before</em> it becomes</span></span> <span class="ln"><span>an incident.</span></span></h1>
+</div>
+<div class="hero-bottom">
+<div class="hero-left">
+<p class="lede">Breached passwords blocked at signup. Leaked keys blocked at merge. Three ML models and an AI copilot that <em>never see a secret</em>, with a live proof that nothing leaves your browser.</p>
+<div class="hero-cta"><button class="btn primary xl magnetic" data-nav="password">Test a password <span class="btn-arrow">→</span></button><button class="btn secondary xl magnetic" data-nav="secrets">Scan a repository</button><button class="btn ghost xl tour-btn" id="tour-start" type="button"><span class="play">▶</span> Guided tour</button></div>
+</div>
+<div class="try-card" id="try-card">
+<div class="try-head"><span class="mono">Try it · k-anonymity, live</span><span class="try-state" id="try-state">0 bytes sent</span></div>
+<label class="try-input"><span class="sr-only">Type any password</span><input autocomplete="off" id="hero-try" maxlength="64" placeholder="Type any password…" spellcheck="false" type="text"/><kbd class="mono">SHA-1</kbd></label>
+<div class="hash-row mono" id="try-hash"><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span><span>0</span></div>
+<div class="try-legend mono"><span class="sent"><i></i>5 chars would go to HIBP</span><span class="kept"><i></i>35 never leave this tab</span></div>
+<div class="try-verdict"><div><small>Offline 1M corpus</small><b id="try-corpus">—</b></div><div><small>Est. guesses</small><b id="try-guess">—</b></div><div><small>Offline crack</small><b id="try-crack">—</b></div></div>
+<button class="try-full" id="try-full" type="button">Open full analysis <span>→</span></button>
+</div>
+</div>
+<div class="hero-stats"><div><strong data-countup="" id="m-checks">—</strong><span>protected checks</span></div><div><strong data-countup="" id="m-breach">—</strong><span>breached attempts</span></div><div><strong data-countup="" id="m-secrets">—</strong><span>secret findings</span></div><div><strong id="m-posture">LIVE</strong><span>posture</span></div></div>
+</div>
+
+</section>
+<div aria-hidden="true" class="marquee"><div class="marquee-track"><div class="marquee-set"><span>k-Anonymity</span><i>✦</i><span><em>NIST 800-63B</em></span><i>✦</i><span>Char-GRU in the browser</span><i>✦</i><span><em>LightGBM + SHAP</em></span><i>✦</i><span>Isolation Forest</span><i>✦</i><span><em>Passkeys</em></span><i>✦</i><span>Honeytokens</span><i>✦</i><span><em>Git history scan</em></span><i>✦</i></div><div class="marquee-set"><span>k-Anonymity</span><i>✦</i><span><em>NIST 800-63B</em></span><i>✦</i><span>Char-GRU in the browser</span><i>✦</i><span><em>LightGBM + SHAP</em></span><i>✦</i><span>Isolation Forest</span><i>✦</i><span><em>Passkeys</em></span><i>✦</i><span>Honeytokens</span><i>✦</i><span><em>Git history scan</em></span><i>✦</i></div></div></div>
+<section class="land-sec briefs">
+<div class="sec-label mono"><span>(01)</span><span>The problem</span></div>
+<h2 class="display" data-split="">Two leaks. <em>One</em> product.</h2>
+<div class="brief-grid">
+<div class="brief-card" data-nav="password" role="button" tabindex="0"><div class="brief-top mono"><span>Brief #20</span><span class="arrow">↗</span></div><h3>Block the <em>breached</em> password</h3><p>Every signup and reset is checked against Have I Been Pwned with k-anonymity. A breached password is rejected by a server-issued ticket, not a UI hint.</p><ul class="brief-list"><li>5-char SHA-1 prefix only, with padding</li><li>Reject-on-breach at signup <b>and</b> reset</li><li>NIST SP 800-63B rev. 4 policy</li><li>“X % of test accounts use a breached password”</li></ul><span class="brief-cta">Open Password Shield</span></div>
+<div class="brief-card inverse" data-nav="secrets" role="button" tabindex="0"><div class="brief-top mono"><span>Brief #24</span><span class="arrow">↗</span></div><h3>The leaked <em>key</em> incident</h3><p>SecretGuard scans the tree and the full git history, cuts false positives with entropy, validity checks and ML, blocks the merge, and teaches rotate, don't just delete.</p><ul class="brief-list"><li>CI gate + pre-commit + web + GitHub URL</li><li>Keys that live on only in git history</li><li>99.3 % recall with LightGBM + SHAP</li><li>AI fix: patch + provider rotation runbook</li></ul><span class="brief-cta">Open SecretGuard</span></div>
+</div>
+</section>
+<section class="land-sec modules">
+<div class="sec-label mono"><span>(02)</span><span>The platform</span></div>
+<h2 class="display" data-split="">Prevent, detect, <em>correlate,</em> contain.</h2>
+<div class="bento">
+<div class="bento-card b-pw" data-nav="password" role="button" tabindex="0"><div class="bento-top mono"><span>01 · Prevent</span><span class="arrow">↗</span></div><div class="viz viz-meter" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><h3>Password Shield</h3><p>Rules and a neural network score guessability. The more conservative one wins.</p></div>
+<div class="bento-card b-sg" data-nav="secrets" role="button" tabindex="0"><div class="bento-top mono"><span>02 · Detect</span><span class="arrow">↗</span></div><div class="viz viz-code mono" aria-hidden="true"><span><i>// payments/config.ts</i></span><span><b>import</b> Stripe <b>from</b> <q>"stripe"</q>;</span><span>&nbsp;</span><span><b>export const</b> region = <q>"eu-west-1"</q>;</span><span><b>export const</b> timeout = <q>3000</q>;</span><span><b>const</b> stripe = <b>new</b> Stripe(<q class="leak">"sk_live_••••••••••••"</q>);</span><span><b>const</b> webhook = process.env.<q>WEBHOOK_SECRET</q>;</span><span>&nbsp;</span><span><b>export default</b> stripe;</span><span class="scan-line"></span></div><h3>SecretGuard</h3><p>Provider keys, risky code and “deleted” secrets still living in git history, blocked before the merge.</p></div>
+<div class="bento-card b-vault" data-nav="vault" role="button" tabindex="0"><div class="bento-top mono"><span>03 · Protect</span><span class="arrow">↗</span></div><div class="viz viz-lock" aria-hidden="true"><span class="ring r1"></span><span class="ring r2"></span><span class="core">AES<br/>256</span></div><h3>Zero-knowledge vault</h3><p>Encrypted in your browser. The server stores ciphertext, and admins can't read it.</p></div>
+<div class="bento-card b-graph" data-nav="exposure" role="button" tabindex="0"><div class="bento-top mono"><span>04 · Correlate</span><span class="arrow">↗</span></div><div class="viz viz-graph" aria-hidden="true"><svg viewBox="0 0 200 110"><path d="M100 55 30 20M100 55 30 92M100 55 170 18M100 55 172 90M100 55 100 8"/><circle cx="100" cy="55" r="9" class="c"/><circle cx="30" cy="20" r="5"/><circle cx="30" cy="92" r="5"/><circle cx="170" cy="18" r="5"/><circle cx="172" cy="90" r="5" class="hot"/><circle cx="100" cy="8" r="4"/></svg></div><h3>Exposure graph</h3><p>Identity, password, repository, secret, sessions and MFA in one evidence story.</p></div>
+<div class="bento-card b-inc" data-nav="incidents" role="button" tabindex="0"><div class="bento-top mono"><span>05 · Respond</span><span class="arrow">↗</span></div><div class="viz viz-flow mono" aria-hidden="true"><span>Detected</span><span>Triaged</span><span>Contained</span><span>Rotated</span><span>Verified</span></div><h3>Incident Center</h3><p>Every finding driven to VERIFIED, with fix deadlines by severity.</p></div>
+<div class="bento-card b-ai" data-nav="ai" role="button" tabindex="0"><div class="bento-top mono"><span>06 · Intelligence</span><span class="arrow">↗</span></div><div class="viz viz-nn" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><h3>AI Lab</h3><p>Three trained models and a copilot, with every AI call passing a redaction guard.</p></div>
+<div class="bento-card b-proof" id="bento-proof" role="button" tabindex="0"><div class="bento-top mono"><span>07 · Proof</span><span class="arrow">↗</span></div><div class="proof-big"><b>0</b><span>password bytes<br/>sent. Ever.</span></div><h3>Don't trust us. <em>Watch.</em></h3><p>A live inspector checks every request this page sends for your password or its hash.</p></div>
+</div>
+</section>
+<section class="story" id="story">
+<div class="story-sticky">
+<div class="story-copy">
+<div class="sec-label mono"><span>(03)</span><span>How your password stays yours</span></div>
+<ol class="story-steps" id="story-steps">
+<li class="active" data-step="0"><b class="mono">01</b><div><h3>Hashed in your browser</h3><p>Web Crypto turns the password into a SHA-1 digest locally. The plaintext never touches the network.</p></div></li>
+<li data-step="1"><b class="mono">02</b><div><h3>Only five characters leave</h3><p>The first 5 hex characters go to HIBP. Hundreds of breached hashes share every prefix, so HIBP cannot tell which one is yours.</p></div></li>
+<li data-step="2"><b class="mono">03</b><div><h3>Every matching suffix comes back</h3><p>Roughly 800 suffixes per prefix, padded with decoys so even the response size gives nothing away.</p></div></li>
+<li data-step="3"><b class="mono">04</b><div><h3>The match happens here</h3><p>Your browser compares suffixes locally. A breached password is refused with a server-issued ticket.</p></div></li>
+</ol>
+</div>
+<div class="story-visual" data-step="0" id="story-visual" aria-hidden="true">
+<div class="sv-stage">
+<div class="sv-client"><span class="sv-tag mono">Your browser</span><div class="sv-pw mono">p a s s w o r d</div><div class="sv-hash mono"><span class="pre">5BAA6</span><span class="rest">1E4C9B93F3F0682250B6CF8331B7EE68FD8</span></div></div>
+<div class="sv-wire"><span class="sv-packet mono">5BAA6</span></div>
+<div class="sv-server"><span class="sv-tag mono">api.pwnedpasswords.com</span><div class="sv-list mono"><span>0018A45C4D1DEF81644B54AB7F969B88D65:10</span><span>00D4F6E8FA6EECAD2A3AA415EEC418D38EC:2</span><span>011053FD0102E94D6AE2F8B83D76FAF94F6:1</span><span class="hit">1E4C9B93F3F0682250B6CF8331B7EE68FD8:<b>MATCH</b></span><span>012A7CA357541F0AC487871FEEC1891C49C:2</span><span>0136E006E24E7D152139815FB0FC6A50B15:3</span></div></div>
+<div class="sv-verdict mono"><span class="x">✕</span> Breached · signup refused</div>
+</div>
+</div>
+</div>
+</section>
+<section class="land-sec numbers">
+<div class="sec-label mono"><span>(04)</span><span>Measured, not claimed</span></div>
+<div class="num-grid">
+<div class="num"><b data-count="99.3" data-dec="1" data-suffix="%">0</b><span>secret recall for the ML classifier, versus 42.6 % for rules alone</span></div>
+<div class="num"><b data-count="0" data-suffix="%">0</b><span>truly random passwords wrongly rated weak by the neural model (rules: 91.5 %)</span></div>
+<div class="num"><b data-count="1" data-suffix="M">0</b><span>leaked passwords checked fully offline in a 1.8 MB Bloom filter</span></div>
+<div class="num"><b data-count="97" data-suffix="%">0</b><span>of login attacks flagged by the Isolation Forest at 1 % false alarms (synthetic benchmark)</span></div>
+</div>
+</section>
+<section class="finale">
+<div class="sec-label mono"><span>(05)</span><span>Your move</span></div>
+<h2 class="mega" data-split="">Ready when <em>the leak</em> is.</h2>
+<div class="hero-cta"><button class="btn primary xl magnetic" data-nav="password">Test a password <span class="btn-arrow">→</span></button><button class="btn secondary xl magnetic" data-nav="secrets">Scan a repository</button><button class="btn ghost xl" data-nav="demo">Open demo center</button></div>
+</section>
+</section>
+<section class="view" id="view-password">
+<div class="section-head"><div><div class="eyebrow">PASSWORD SHIELD</div><h2>Measure guessability, <em>not decoration.</em></h2><p>Analyze locally at any time; the HIBP network check is explicit. Password-only accounts require 15+ characters and a successful breach verification.</p></div><div class="policy-pill"><span>Password-only baseline</span><b>15+ chars</b></div></div>
+<div class="split password-layout">
+<div class="panel glass-xl password-panel">
+<div class="field-row"><div><label class="field-label" for="pw-input">Password under test</label><div class="password-box"><input autocomplete="new-password" class="input password-input" id="pw-input" minlength="10" placeholder="Type a password, then run a check" type="password"/><button aria-label="Reveal password" class="icon-btn" id="pw-reveal">◉</button></div></div></div>
+<div class="context-grid"><label class="field-label">Optional name/context<input class="input compact" id="pw-context-name" placeholder="e.g. Divy Mathur"/></label><label class="field-label">Optional account/company<input class="input compact" id="pw-context-org" placeholder="e.g. acme.com"/></label></div>
+<div class="strength-wrap"><div class="strength-top"><div><span id="pw-label">Waiting</span><small id="pw-headline">Type a password to see a conservative guessability estimate.</small></div><div class="score-badge"><span class="verdict-chip review" id="pw-verdict">REVIEW</span><strong id="pw-score">0 / 100</strong></div></div><div class="strength-bar"><i id="pw-bar"></i></div></div>
+<div class="neural-panel glass" id="neural-panel"><div class="neural-head"><div><div class="panel-kicker">ATTACK MODELS · RUN IN YOUR BROWSER</div><strong id="nn-headline">Type a password to get a neural guess estimate.</strong><small id="nn-sub">A neural network trained on leaked passwords, ranked word &amp; name lists (103k English words, first names and surnames), and the 1M leaked-password corpus. The most conservative wins. The password never leaves this tab.</small></div><div class="nn-number"><b id="nn-guesses">—</b><span>est. guesses</span></div></div>
+<div class="nn-bars"><div><span>Rules score</span><div class="mini-meter"><i id="nn-rules-bar"></i></div><b id="nn-rules">—</b></div><div><span>Attack-model score</span><div class="mini-meter ai"><i id="nn-bar"></i></div><b id="nn-score">—</b></div><div><span>Offline crack time</span><b class="nn-time" id="nn-time">—</b></div></div>
+<div class="nn-actions"><button class="btn secondary" id="ai-coach-btn" type="button">✦ Explain with AI coach</button><small>Sends only analysis flags (length, score, pattern booleans) — never the password.</small></div>
+<div class="ai-coach hidden" id="ai-coach"></div></div>
+<div class="control-grid five"><div class="control"><span>Length</span><b id="pw-length">0</b></div><div class="control"><span>Est. guess rank</span><b id="pw-guesses">—</b></div><div class="control"><span>Model estimate*</span><b id="pw-bits">—</b></div><div class="control"><span>Pattern risk</span><b id="pw-pattern">—</b></div><div class="control"><span>Context</span><b id="pw-context">None</b></div></div>
+<div class="score-explain glass"><div class="panel-kicker">WHY THIS SCORE</div><p id="pw-why">A score is based on predictable structure, not just length.</p><div class="reason-list" id="pw-reasons"></div></div>
+<div class="risk-breakdown glass" id="risk-breakdown"><div class="panel-kicker">RISK BREAKDOWN</div><div class="risk-grid"><div><span>Identity / name</span><b id="risk-identity">NONE</b></div><div><span>Dictionary</span><b id="risk-dictionary">NONE</b></div><div><span>Numeric / date</span><b id="risk-numeric">NONE</b></div><div><span>Repetition</span><b id="risk-repeat">NONE</b></div><div><span>Keyboard / sequence</span><b id="risk-sequence">NONE</b></div><div><span>Human vs generated</span><b id="risk-source">HUMAN</b></div></div><small>These are evidence signals, not a promise of exact crack time.</small></div>
+<div class="privacy-receipt" id="privacy-receipt"><div><span>Local breach corpus (1M, fully offline)</span><b id="local-corpus">—</b></div><div><span>Full password leaves browser</span><b class="bad">NO</b></div><div><span>Full SHA-1 sent to HIBP</span><b class="bad">NO</b></div><div><span>HIBP range prefix</span><b id="hibp-prefix">WAITING</b></div><div><span>Suffix comparison</span><b class="good">LOCAL</b></div></div>
+<div class="action-row"><button class="btn primary xl" id="analyze-password">Analyze locally</button><button class="btn accent xl" id="hibp-check">Check with HIBP</button><button class="btn secondary xl" id="generate-pass">Generate secure secret</button><button class="btn ghost xl" id="clear-password">Clear</button></div>
+<div class="generator-tools glass">
+<div><div class="panel-kicker">SECURE GENERATOR</div><strong>Use a CSPRNG, not a pattern</strong><span>Random secret or memorable passphrase — generated only in the browser.</span></div>
+<div class="generator-control-row"><label>Mode<select class="input compact" id="generator-mode"><option value="random">Random secret</option><option value="passphrase">Passphrase</option></select></label><label>Length<input id="generator-length" max="64" min="10" type="range" value="32"/><b id="generator-length-value">32 chars</b></label><button class="btn secondary" id="copy-pass">Copy result</button></div>
+</div>
+<div class="generator-note"><b>Accuracy note:</b> human-password numbers are model estimates; exact construction entropy is shown only for generated secrets.</div>
+<div class="result info" id="pw-result">Waiting for a password check.</div>
+</div>
+<aside class="panel glass-xl explainer"><div class="panel-kicker">LOCAL PRIVACY TRACE</div><div class="trace-step active"><b>01</b><strong>Browser memory</strong><span>password exists only on the client</span></div><div class="trace-step"><b>02</b><strong>Web Crypto</strong><span>SHA-1 and verifier derivation stay local</span></div><div class="trace-step"><b>03</b><strong>Five characters</strong><span>only the HIBP range prefix leaves the browser</span></div><div class="trace-step"><b>04</b><strong>Local match</strong><span>returned suffixes are compared locally</span></div><div class="callout"><strong>Real-world rule</strong><p>A password can be long and still be easy to guess. Length is valuable, but predictable patterns, context and repetition can dominate.</p></div><div class="scenario-box"><div class="panel-kicker">REAL-LIFE TESTS</div><button class="scenario" data-preset="longpredictable"><b>Long but predictable</b><span>aaaasfiefifosdnofsdfn</span></button><button class="scenario" data-preset="identityreuse"><b>Identity + numbers</b><span>divy1023divy1032</span></button><button class="scenario" data-preset="numeric"><b>Numeric-only</b><span>3492847592039485720</span></button><button class="scenario" data-preset="humanrandom"><b>Random-looking human text</b><span>asfajfbjadbfiwebfiwefiewb</span></button><button class="scenario" data-preset="passphrase"><b>Long passphrase</b><span>river lantern copper orbit</span></button></div></aside>
+</div>
+<div class="benchmark-panel glass-xl" id="benchmark-panel"><div class="findings-head"><div><div class="panel-kicker">REAL-LIFE BENCHMARK</div><h3>Five passwords, five threat profiles</h3><span>Run the same local model against predictable, identity-linked, numeric, random-looking and passphrase examples.</span></div><button class="btn secondary" id="run-benchmark">Run benchmark</button></div><div class="table-wrap"><table class="benchmark-table"><thead><tr><th>Case</th><th>Example</th><th>Score</th><th>Band</th><th>Decision</th><th>Why</th></tr></thead><tbody id="benchmark-results"></tbody></table></div></div>
+<div class="case-grid"><div class="case-card glass"><span>ACCURACY NOTE</span><b>Human passwords ≠ exact entropy</b><small>The product reports a conservative guessability estimate. Exact entropy is shown only for cryptographically generated secrets.</small></div><div class="case-card glass"><span>POLICY NOTE</span><b>10–14 characters</b><small>Can be analyzed, but the password-only policy still flags below 15. Pair with MFA or use a stronger passphrase.</small></div><div class="case-card glass"><span>BLOCK NOTE</span><b>Breach evidence wins</b><small>A password found in the HIBP corpus is blocked regardless of the UI score.</small></div><div class="case-card glass"><span>DESIGN NOTE</span><b>No composition theater</b><small>Adding one ! to a predictable password should not make the UI call it strong.</small></div></div>
+</section>
+<section class="view" id="view-vault">
+<div class="section-head">
+<div>
+<div class="eyebrow">ZERO-KNOWLEDGE VAULT</div>
+<h2>Encrypted here. <em>Unreadable</em> everywhere else.</h2>
+<p>PrivPass encrypts each vault record in your browser with AES-GCM. The server stores opaque ciphertext only. Admins can manage accounts, but cannot read vault contents.</p>
+</div>
+<div class="policy-pill"><span>Auto-lock</span><b>5 min idle</b></div>
+</div>
+<div class="vault-shell glass-xl">
+<div class="vault-topbar">
+<div class="vault-state"><span class="status-dot locked" id="vault-status-dot"></span><div><b id="vault-status">Vault locked</b><small id="vault-substatus">Sign in, then unlock using your master password.</small></div></div>
+<div class="vault-actions"><button class="btn secondary" id="vault-lock">Lock vault</button><button class="btn primary" id="vault-add">+ New login</button></div>
+</div>
+<div class="vault-lock-panel" id="vault-locked">
+<div class="vault-lock-art"><div class="vault-lock-orbit"><span>ZERO</span><b>KNOWLEDGE</b><small>client key</small></div></div>
+<div class="vault-lock-copy">
+<div class="panel-kicker">PRIVATE BY DESIGN</div>
+<h3>Unlock once. Use everywhere.</h3>
+<p>Your master password is used locally to derive the vault key. It is never stored in the vault, never sent to the server for the vault, and cannot be viewed by an administrator.</p>
+<div class="vault-unlock-row"><input autocomplete="current-password" class="input xl" id="vault-master" placeholder="Master password" type="password"/><button class="btn accent xl" id="vault-unlock">Unlock vault</button></div>
+<div class="vault-safety"><span>✓ AES-GCM-256</span><span>✓ PBKDF2-SHA-256</span><span>✓ Server sees ciphertext</span><span>✓ Auto-lock</span><span>✓ Admin cannot decrypt</span></div>
+</div>
+</div>
+<div class="vault-unlocked hidden" id="vault-unlocked">
+<div class="vault-metrics">
+<div class="vault-stat"><span>Saved logins</span><b id="vault-count">0</b></div>
+<div class="vault-stat"><span>Weak / review</span><b id="vault-weak">0</b></div>
+<div class="vault-stat"><span>Rotation due</span><b id="vault-due">0</b></div>
+<div class="vault-stat"><span>Reused password</span><b id="vault-reused">0</b></div>
+<div class="vault-stat"><span>Vault posture</span><b id="vault-posture">HEALTHY</b></div>
+</div>
+<div class="vault-toolbar">
+<input aria-label="Search vault" class="input" id="vault-search" placeholder="Search sites, usernames, tags…"/>
+<select class="input compact" id="vault-filter"><option value="all">All entries</option><option value="weak">Weak / review</option><option value="due">Rotation due</option><option value="reused">Reused</option><option value="favorite">Favorites</option></select>
+<button class="btn secondary" id="vault-demo-seed">Add demo logins</button>
+<button class="btn secondary" id="vault-export">Export encrypted backup</button>
+<button class="btn secondary" id="vault-import-btn">Import encrypted backup</button><button class="btn secondary" id="vault-reminder-enable">Enable reminders</button>
+<input accept="application/json,.json" hidden="" id="vault-import-file" type="file"/>
+</div>
+<div class="vault-health glass" id="vault-health"></div>
+<div class="vault-list" id="vault-list"><div class="empty-state">No saved logins yet. Add your first account.</div></div>
+</div>
+</div>
+</section>
+<section class="view" id="view-secrets">
+<div class="section-head"><div><div class="eyebrow">SECRETGUARD</div><h2>Catch leaked keys <em>before</em> the merge.</h2><p>Upload a repository ZIP (include the <code>.git</code> folder to scan every commit). Secrets, risky code patterns and keys that were "deleted" but still live in git history. The scanner never executes code and stores only redacted findings plus HMAC fingerprints.</p></div><div class="hero-cta"><a class="btn secondary" href="/api/demo/repository.zip">Download demo ZIP</a><a class="btn secondary" href="/api/demo/history-repository.zip" title="A repo whose HEAD is clean but whose git history still contains keys">History-leak ZIP</a><button type="button" class="btn primary" id="judge-scan">Run Judge Demo</button></div></div>
+<div class="split"><div class="panel glass-xl scanner-panel"><div class="dropzone" id="dropzone"><div class="drop-icon">⇧</div><h3>Drop a repository ZIP</h3><p>Max 25 MB • text-aware • ZIP-bomb protected • never executes code</p><input accept=".zip" id="repo-file" type="file"/><button type="button" class="btn secondary xl" id="browse-repo">Choose ZIP</button></div><div class="scanner-stats"><div><span>Critical</span><b id="crit-count">0</b></div><div><span>High</span><b id="high-count">0</b></div><div><span>Medium</span><b id="med-count">0</b></div><div><span>Confidence</span><b id="conf-count">—</b></div></div></div><div class="panel glass-xl scanner-explain"><div class="panel-kicker">WHY A FINDING IS TRUSTWORTHY</div><div class="engine-rule"><b>Pattern</b><span>Provider-specific signatures such as AWS, GitHub, Stripe, Slack, Google, JWT, private key and database URL formats.</span></div><div class="engine-rule"><b>Context</b><span>Assignment syntax, file type and surrounding words influence confidence.</span></div><div class="engine-rule"><b>Entropy</b><span>Generic secret-like assignments are escalated only when the value looks sufficiently non-trivial.</span></div><div class="engine-rule"><b>Redaction</b><span>Raw secrets are never persisted; only a redacted preview and HMAC fingerprint are stored.</span></div><div class="engine-rule"><b>Response</b><span>DETECTED → TRIAGED → CONTAINED → ROTATED → VERIFIED.</span></div><div class="callout green"><strong>CI + PRE-COMMIT READY</strong><p>One detection engine powers the web scan, CLI, staged-file pre-commit hook and GitHub Actions gate. Verified CRITICAL/HIGH findings can block a commit or merge.</p><div class="command-snippets"><code>python tools/secret_scan.py . --fail-on high</code><code>python tools/secret_scan.py --staged --fail-on high</code><code>INSTALL-SECRETGUARD-HOOK.bat</code></div></div></div></div>
+<div class="sg-extras">
+<div class="panel glass-xl gh-panel"><div class="panel-kicker">SCAN A GITHUB REPOSITORY</div><h3>Paste a URL — full history included</h3><p class="muted">Public repos work as-is. Private repos and one-click fix pull requests need <code>GITHUB_TOKEN</code> in <code>.env</code>.</p>
+<form class="gh-form" id="gh-form"><input class="input" id="gh-url" placeholder="https://github.com/owner/repo"/><button class="btn primary" id="gh-scan" type="submit">Scan repo</button></form><small class="muted" id="gh-status"></small></div>
+<div class="panel glass-xl honey-panel"><div class="panel-kicker">HONEYTOKENS · BAIT KEYS</div><h3>Catch whoever uses your leaked code</h3><p class="muted">Plant a fake key or URL in a repo or config. It does nothing — except raise a CRITICAL alert with the attacker's IP the moment anyone tries it.</p>
+<form class="honey-form" id="honey-form"><input class="input" id="honey-label" maxlength="120" placeholder="Label, e.g. payments-api .env"/><select class="input compact" id="honey-kind"><option value="api_key">Fake API key</option><option value="url">Canary URL</option></select><button class="btn primary" type="submit">Create</button></form>
+<div class="honey-new hidden" id="honey-new"></div><div class="honey-list" id="honey-list"></div></div>
+</div>
+<div class="findings-panel glass-xl">
+  <div class="findings-head"><div><h3>Exposure queue</h3><span id="finding-meta">No scan yet</span></div><span class="queue-hint">Expand a finding to inspect evidence, impact and remediation.</span></div>
+  <div class="findings-toolbar" aria-label="Exposure queue filters">
+    <label class="finding-search"><span class="sr-only">Search findings</span><input class="input compact" id="finding-search" placeholder="Search type, file or reason…" autocomplete="off"/></label>
+    <label><span class="sr-only">Severity filter</span><select class="input compact" id="finding-severity"><option value="ALL">All severities</option><option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option></select></label>
+    <label><span class="sr-only">Status filter</span><select class="input compact" id="finding-status"><option value="ALL">All statuses</option><option value="DETECTED">Detected</option><option value="TRIAGED">Triaged</option><option value="CONTAINED">Contained</option><option value="ROTATED">Rotated</option><option value="VERIFIED">Verified</option></select></label>
+    <button class="btn ghost compact-btn" id="finding-clear-filters" type="button">Reset</button>
+    <button class="btn secondary compact-btn" id="ai-triage" type="button" title="ML decides clear cases; the AI explains the grey zone">✦ AI triage</button>
+  </div>
+  <div class="findings-list" id="findings-list"><div class="empty-state">Run the Judge Demo or upload the included demo ZIP.</div></div>
+</div>
+</section>
+<section class="view" id="view-exposure">
+<div class="section-head"><div><div class="eyebrow">EXPOSURE MAP</div><h2>Your attack surface, <em>mapped.</em></h2><p>Every way an attacker could reach you, from your password and sign-in factors to leaked keys in your repositories and bait keys someone has used. Built live from your own data, with no secret values.</p></div><div class="graph-live-meta" id="graph-live-meta">Sign in to map your exposure.</div></div>
+<div class="xp-top">
+<div class="xp-score glass-xl" id="xp-score-card">
+<div class="panel-kicker">EXPOSURE SCORE</div>
+<div class="xp-gauge"><svg viewBox="0 0 220 128" aria-hidden="true"><defs><linearGradient id="xp-grad" x1="0" x2="1"><stop offset="0" stop-color="var(--ok)"/><stop offset=".5" stop-color="var(--warn)"/><stop offset="1" stop-color="var(--danger)"/></linearGradient></defs><path class="xp-track" d="M20 110 A90 90 0 0 1 200 110"/><path class="xp-arc" id="xp-arc" d="M20 110 A90 90 0 0 1 200 110"/><g id="xp-ticks"></g></svg><div class="xp-gauge-num"><b id="xp-score">—</b><span id="xp-label">WAITING</span></div></div>
+<p class="xp-caption">0 means nothing is exposed; 100 means act now. <span id="xp-caption-extra"></span></p>
+<div class="xp-factors" id="xp-factors"><div class="empty-state">Sign in to see what drives your score.</div></div>
+</div>
+<div class="xp-map glass-xl" id="xp-map">
+<div class="xp-map-head"><div class="panel-kicker">ATTACK SURFACE · LIVE</div><div class="xp-legend mono"><span class="safe"><i></i>protected</span><span class="warn"><i></i>weak</span><span class="critical"><i></i>exposed</span></div></div>
+<div class="xp-stage"><svg id="xp-svg" viewBox="0 0 800 560" role="img" aria-label="Attack surface map"></svg></div>
+<div class="xp-detail" id="xp-detail" aria-live="polite"><div class="xp-detail-empty"><b>Select any node</b><span>Hover or tap a node to see what it exposes and how to close it.</span></div></div>
+</div>
+</div>
+<div class="xp-section"><div class="xp-section-head"><div><div class="panel-kicker">ATTACK PATHS</div><h3>How an attacker would get in, <em>ranked.</em></h3></div><p class="muted small">Each path runs from an entry point to what it gives an attacker, then the fix that closes it.</p></div><div class="xp-paths" id="xp-paths"><div class="empty-state">No attack paths yet.</div></div></div>
+<div class="xp-bottom">
+<div class="glass-xl xp-controls-card"><div class="panel-kicker">CONTROLS COVERAGE</div><div class="xp-controls-top"><div class="xp-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="xp-ring-track" cx="60" cy="60" r="50"/><circle class="xp-ring-val" id="xp-ring" cx="60" cy="60" r="50"/></svg><b id="xp-ring-num">0/0</b></div><p class="muted small">Controls that make each attack path harder. Click one to fix it.</p></div><ul class="xp-controls" id="xp-controls"></ul></div>
+<div class="glass-xl xp-timeline-card"><div class="panel-kicker">EXPOSURE TIMELINE</div><ol class="xp-timeline" id="xp-timeline"><li class="empty-state">No activity yet.</li></ol></div>
+</div>
+</section>
+<section class="view" id="view-incidents"><div class="section-head"><div><div class="eyebrow">INCIDENT CENTER</div><h2>Turn evidence <em>into action.</em></h2><p>These incidents are created directly from findings in your latest SecretGuard scan. Status changes are persisted and reflected back here.</p></div><div class="incident-live-meta" id="incident-live-meta">No scan yet</div></div><div class="incident-summary-row"><div><span>Detected</span><b id="incident-count-detected">0</b></div><div><span>Triaged</span><b id="incident-count-triaged">0</b></div><div><span>Contained</span><b id="incident-count-contained">0</b></div><div><span>Rotated</span><b id="incident-count-rotated">0</b></div><div><span>Verified</span><b id="incident-count-verified">0</b></div></div><div class="incident-board glass-xl" id="incident-board"><div class="empty-state">Run a SecretGuard scan to create real incidents.</div></div></section>
+<section class="view" id="view-command"><div class="section-head"><div><div class="eyebrow">COMMAND CENTER</div><h2>Exposure posture, <em>continuously.</em></h2><p>Aggregate-safe telemetry only. Raw passwords and raw secrets never appear here.</p></div><div class="hero-cta"><button class="btn secondary" id="export-report">Export CSV</button><button class="btn primary" id="judge-tour">Run Judge Tour</button></div></div>
+<div class="command-grid"><div class="panel glass-xl big-metric"><span>Breach-gate rejection rate</span><strong id="admin-breach">—</strong><div class="ring-progress"><i id="posture-ring"></i></div><small id="admin-gate-sub">signup/reset attempts using a breached password</small></div><div class="panel glass-xl big-metric"><span>Secret findings</span><strong id="admin-secrets">—</strong><div class="mini-bars"><i style="height:30%"></i><i style="height:56%"></i><i style="height:40%"></i><i style="height:73%"></i><i style="height:88%"></i><i style="height:64%"></i></div><small>current exposure queue</small></div><div class="panel glass-xl big-metric"><span>Control posture</span><strong id="admin-posture">—</strong><div class="progress"><i id="posture-progress"></i></div><small>password + secret + response</small></div><div class="panel glass-xl big-metric"><span>Average password score</span><strong id="admin-avg">—</strong><div class="mini-bars cool"><i style="height:45%"></i><i style="height:62%"></i><i style="height:58%"></i><i style="height:77%"></i><i style="height:70%"></i><i style="height:83%"></i></div><small>aggregate only</small></div></div>
+<div class="panel glass-xl sim-panel" data-role-min="admin" data-ws-only="demo" id="sim-panel">
+<div class="sim-head"><div><div class="panel-kicker">DEMO SIMULATIONS · ADMIN ONLY</div><h3>Show the alarms without a real incident</h3><p class="muted">Everything created here is labelled <b>[SIMULATION]</b> and can be removed in one click. Real accounts, sign-ins and alerts are never touched.</p></div><span class="sim-badge" id="sim-summary">No simulation data</span></div>
+<div class="sim-grid">
+<div class="sim-card featured"><b>Load demo data</b><span>Fills the demo workspace with a full story: 2 scanned repos (one key survives only in git history), findings at every stage with one overdue, a tripped honeytoken, breach-gate stats, a test-account audit and login attacks.</span><button class="btn primary" id="sim-seed" type="button">Load demo data</button></div>
+<div class="sim-card"><b>Password found in a new breach</b><span>Locks the chosen account, signs out all its sessions and requires a password reset — exactly what the breach watch does for real.</span><div class="sim-row"><select aria-label="Account to simulate" class="input compact" id="sim-user"></select><button class="btn primary" id="sim-breach" type="button">Simulate breach</button></div></div>
+<div class="sim-card"><b>Login attack traffic</b><span>Injects labelled credential-stuffing, brute-force and enumeration traffic for the anomaly detector (AI Lab).</span><button class="btn primary" id="sim-attack" type="button">Simulate attack</button></div>
+<div class="sim-card danger"><b>Remove all simulation data</b><span>Deletes demo data, simulated sign-ins and alerts, and unlocks every simulated account. The audit log keeps a record.</span><button class="btn secondary" id="sim-clear" type="button">Remove simulation data</button></div>
+</div><div class="auth-status" id="sim-status" role="status"></div></div>
+<div class="sla-strip"><div class="panel glass-xl sla-tile"><span>Mean time to contain</span><b id="sla-contain">—</b><small>detection → CONTAINED</small></div><div class="panel glass-xl sla-tile"><span>Mean time to rotate</span><b id="sla-rotate">—</b><small>detection → ROTATED</small></div><div class="panel glass-xl sla-tile"><span>Fix-deadline compliance</span><b id="sla-compliance">—</b><small>CRITICAL 4 h · HIGH 24 h · MEDIUM 7 d</small></div><div class="panel glass-xl sla-tile"><span>Overdue findings</span><b id="sla-overdue">—</b><small id="sla-atrisk">—</small></div><div class="panel glass-xl sla-tile bait"><span>Honeytoken trips</span><b id="honey-trips">—</b><small>bait keys used by someone</small></div></div>
+<div class="panel glass-xl account-audit" id="account-audit-panel"><div class="account-audit-head"><div><div class="panel-kicker">TEST-ACCOUNT BREACH AUDIT</div><h3 id="audit-headline">No audit run yet.</h3><p class="muted">Load a CSV of test accounts (<code>email,password</code>). Every password is NFKC-normalized and SHA-1 hashed <b>in this browser</b>; only 5-character prefixes go to HIBP (with response padding). Only the aggregate counts are saved to the server.</p></div><div class="audit-actions"><button class="btn secondary" id="audit-sample">Run on sample list</button><button class="btn primary" id="audit-browse">Upload CSV</button><input accept=".csv,text/csv" hidden id="audit-file" type="file"/></div></div>
+<div class="audit-stats" id="audit-stats"><div><span>Accounts</span><b id="audit-total">—</b></div><div><span>Breached</span><b id="audit-breached">—</b></div><div><span>Below 15 chars</span><b id="audit-short">—</b></div><div><span>Unverified</span><b id="audit-unverified">—</b></div><div><span>HIBP requests</span><b id="audit-requests">—</b></div></div>
+<div class="progress audit-progress"><i id="audit-progress"></i></div>
+<div class="audit-table-wrap"><table class="bench-table audit-table"><thead><tr><th>Account</th><th>Result</th><th>Seen in breaches</th><th>Policy</th></tr></thead><tbody id="audit-rows"><tr><td colspan="4" class="muted">Per-account results stay in this browser tab and are never uploaded.</td></tr></tbody></table></div></div>
+<div class="admin-strip"><div class="panel glass-xl"><div class="roster-head"><div class="panel-kicker">Account roster</div><button class="btn secondary compact-btn" id="breach-watch-run" type="button">Re-check all passwords now</button></div><small class="muted roster-note" id="breach-watch-status">The breach watch also runs automatically in the background.</small><div class="user-list" id="user-list"><div class="empty-state">Sign in as admin to view users.</div></div></div><div class="panel glass-xl"><div class="panel-kicker">Security stream</div><div class="audit-list" id="audit-list"><div class="empty-state">Sign in as admin to view audit events.</div></div></div></div>
+</section>
+<section class="view" id="view-ai">
+<div class="section-head"><div><div class="eyebrow">AI LAB</div><h2>Models that <em>never</em> see a secret.</h2><p>Three models trained and evaluated for this project, plus generative AI for explanation and action. Every AI request passes a redaction guard; findings reach the model only as masked snippets.</p></div><div class="ai-status" id="ai-status"><span class="dot"></span><b id="ai-provider">Checking…</b><small id="ai-model">—</small></div></div>
+
+<div class="model-grid" id="model-grid">
+<article class="panel glass-xl model-card"><div class="panel-kicker">01 · SECRET CLASSIFIER</div><h3>LightGBM on 35 code features</h3><p>Decides whether a string literal is a hardcoded credential, using entropy, character mix, variable name, file path and context. Explains every score with SHAP contributions.</p><div class="compare" id="mc-secret"></div><small class="model-foot" id="mc-secret-foot"></small></article>
+<article class="panel glass-xl model-card"><div class="panel-kicker">02 · NEURAL PASSWORD MODEL</div><h3>Char-GRU + Monte Carlo guess numbers</h3><p>Estimates how many guesses an attacker needs (Melicher et al., USENIX Security 2016). Runs as 217 KB of int8 weights in the browser.</p><div class="compare" id="mc-password"></div><small class="model-foot" id="mc-password-foot"></small></article>
+<article class="panel glass-xl model-card"><div class="panel-kicker">03 · LOGIN ANOMALY DETECTOR</div><h3>Isolation Forest on sign-in windows</h3><p>Unsupervised: learns normal sign-in behaviour per IP and 5-minute window, then flags credential stuffing, brute force and account enumeration.</p><div class="compare" id="mc-anomaly"></div><small class="model-foot" id="mc-anomaly-foot"></small></article>
+</div>
+
+<div class="panel glass-xl ai-panel" id="anomaly-panel"><div class="findings-head"><div><div class="panel-kicker">LIVE SIGN-IN ANOMALIES · LAST 24 H</div><h3 id="anomaly-headline">Sign in as admin or analyst to view.</h3><span id="anomaly-meta"></span></div><div class="hero-cta"><button class="btn secondary" data-role-min="admin" id="anomaly-clear">Clear simulated</button><button class="btn primary" data-role-min="admin" id="anomaly-simulate">Simulate attack traffic</button></div></div>
+<div class="anomaly-list" id="anomaly-list"></div></div>
+
+<div class="ai-two">
+<div class="panel glass-xl ai-panel copilot"><div class="panel-kicker">SECURITY COPILOT</div><h3>Ask about your exposure</h3><p class="muted">Answers come only from read-only, role-scoped tools over PrivPass data. Findings are redacted.</p>
+<div class="chip-row" id="copilot-suggestions"><button>Which critical findings are still unrotated?</button><button>Any login attacks in the last 24 hours?</button><button>Which secrets exist only in git history?</button><button>Summarise our security posture</button></div>
+<div class="chat" id="copilot-chat"><div class="chat-empty">Sign in as admin or analyst and ask a question.</div></div>
+<form class="chat-input" id="copilot-form"><input autocomplete="off" class="input" id="copilot-q" maxlength="500" placeholder="e.g. show risky code patterns"/><button class="btn primary" type="submit">Ask</button></form></div>
+<div class="panel glass-xl ai-panel"><div class="panel-kicker">INCIDENT REPORT</div><h3>One-click postmortem</h3><p class="muted">Executive summary, timeline, findings table, rotation status and action checklist - generated from audit data.</p>
+<div class="hero-cta"><button class="btn primary" id="report-generate">Generate report</button><button class="btn secondary hidden" id="report-download">Download .md</button></div>
+<div class="report-view md" id="report-view"></div></div>
+</div>
+
+<div class="panel glass-xl ai-guard"><div class="panel-kicker">PRIVACY GUARD</div><div class="guard-grid"><div><b>AI can see</b><span>finding type, file, line, severity, ML reasons, masked snippets (<code>&lt;REDACTED:STRIPE_SECRET_KEY&gt;</code>), aggregate counts, password <em>flags</em></span></div><div><b>AI never sees</b><span>passwords, password hashes or prefixes, raw secrets, vault contents, emails of test accounts</span></div><div><b>Enforced by</b><span><code>app/redaction.py</code> — every outbound payload is scanned; anything credential-shaped aborts the call. Covered by unit tests.</span></div></div></div>
+</section>
+<section class="view" id="view-demo"><div class="section-head"><div><div class="eyebrow">DEMO CENTER</div><h2>A clean demo in <em>four minutes.</em></h2><p>Use the included accounts and fake repository to demonstrate the complete prevention → detection → correlation → remediation loop.</p></div></div>
+<div class="demo-lock sandbox-note"><b>These accounts are a sandbox.</b> They only see demo data, can't change passwords or manage users, and never send real alerts. Accounts you create yourself (and the private real-admin account) live in a separate workspace that demo accounts can't see.</div>
+<div class="demo-grid"><div class="panel glass-xl"><div class="panel-kicker">ADMIN ACCESS</div><h3>Command Center administrator</h3><div class="credential-row"><span>Email</span><code id="demo-admin-email">admin@privpass.local</code></div><div class="credential-row"><span>Password</span><code id="demo-admin-pass">PrivPass!Demo#2026-Admin</code></div><div class="credential-row"><span>Role</span><code>admin</code></div><button class="btn secondary" id="copy-admin">Copy admin credentials</button></div><div class="panel glass-xl"><div class="panel-kicker">ANALYST ACCESS</div><h3>Read-focused analyst account</h3><div class="credential-row"><span>Email</span><code id="demo-analyst-email">analyst@privpass.local</code></div><div class="credential-row"><span>Password</span><code id="demo-analyst-pass">PrivPass!Demo#2026-Analyst</code></div><div class="credential-row"><span>Role</span><code>analyst</code></div></div><div class="panel glass-xl"><div class="panel-kicker">VAULT USER</div><h3>Private vault demo account</h3><div class="credential-row"><span>Email</span><code id="demo-user-email">user@privpass.local</code></div><div class="credential-row"><span>Password</span><code id="demo-user-pass">PrivPass!Demo#2026-User</code></div><div class="credential-row"><span>Role</span><code>user</code></div><p class="muted">Use this account to demonstrate the zero-knowledge password manager.</p></div><div class="panel glass-xl demo-sequence"><div class="panel-kicker">JUDGE SEQUENCE</div><ol><li>Open Password Shield → run the long-predictable and identity-reuse scenarios.</li><li>Click Check with HIBP on a known common password to demonstrate the privacy proof.</li><li>Open SecretGuard → download the demo ZIP → upload it.</li><li>Use Incident Center to move a finding through remediation states.</li><li>Sign in as admin → Command Center → show aggregate rate, findings, posture and audit stream.</li><li>SecretGuard → expand a finding → <b>✦ AI fix</b> (patch + rotation runbook, with the masked input the AI saw).</li><li>AI Lab → model cards → <b>Simulate attack traffic</b> → ask the copilot “Any login attacks in the last 24 hours?” → Generate report.</li></ol></div><div class="panel glass-xl"><div class="panel-kicker">DROP-IN WIDGET</div><h3>Protect any signup page with one tag</h3><p>A form-associated web component: the browser refuses to submit a breached password. See it on a fictional company's signup page.</p><pre class="cmd">&lt;script src="/static/widget/privpass-password-field.js"&gt;&lt;/script&gt;
+&lt;privpass-password-field name="password"&gt;&lt;/privpass-password-field&gt;</pre><a class="btn primary xl" href="/demo/acme" target="_blank">Open the Acme demo ↗</a></div><div class="panel glass-xl"><div class="panel-kicker">DOWNLOADABLE TEST ASSETS</div><h3>PrivPass-Demo-Leak-Repo.zip</h3><p>Contains intentionally fake, non-functional secrets designed to make the scanner visibly useful.</p><a class="btn primary xl" href="/api/demo/repository.zip">Download demo ZIP</a></div></div>
+</section>
+</main>
+<footer class="site-footer"><div class="foot-big" aria-hidden="true">PrivPass <em>Shield</em></div><div class="foot-row mono"><span>© 2026 PrivPass Shield · hackathon build</span><span>No plaintext password or full hash ever leaves your browser.</span><button class="link-btn" data-nav="demo" type="button">Demo center ↗</button></div></footer>
+<div class="modal" id="vault-editor"><div class="modal-card vault-editor-card glass-xl">
+<button class="modal-close" id="vault-editor-close">×</button>
+<div class="eyebrow">VAULT ENTRY</div><h2 id="vault-editor-title">Save a login</h2>
+<p>Everything in this form is encrypted in your browser before it is sent to PrivPass.</p>
+<div class="context-grid"><label class="field-label">Website / service<input class="input" id="vault-site" placeholder="instagram.com"/></label><label class="field-label">Username<input class="input" id="vault-username" placeholder="op_09"/></label></div>
+<label class="field-label">Password<div class="password-box"><input autocomplete="new-password" class="input password-input" id="vault-password" placeholder="Generate or paste a password" type="password"/><button aria-label="Reveal password" class="icon-btn" id="vault-password-reveal">◉</button></div></label>
+<div class="vault-entry-strength"><div><span id="vault-entry-strength-label">Strength</span><small id="vault-entry-strength-reason">Type a password to analyze it locally.</small></div><strong id="vault-entry-strength-score">—</strong><div class="strength-bar"><i id="vault-entry-strength-bar"></i></div></div>
+<div class="generator-control-row vault-generator-row"><label>Generator<select class="input compact" id="vault-gen-mode"><option value="random">Random secret</option><option value="passphrase">Passphrase</option></select></label><label>Length<input id="vault-gen-length" max="64" min="20" type="range" value="32"/><b id="vault-gen-length-value">32 chars</b></label><button class="btn secondary" id="vault-generate">Generate</button></div>
+<div class="context-grid"><label class="field-label">Tags<input class="input" id="vault-tags" placeholder="social, work, finance"/></label><label class="field-label vault-check-row"><span>Options</span><span class="checkline"><input id="vault-favorite" type="checkbox"/> Favorite</span><span class="checkline"><input id="vault-remind" type="checkbox"/> Review reminder in 30 days</span><small class="muted">Optional. NIST 800-63B advises rotating on evidence of compromise, not on a schedule.</small></label></div>
+<label class="field-label">Notes<textarea class="input textarea" id="vault-notes" placeholder="Recovery hints that are safe to store in the encrypted vault"></textarea></label>
+<div class="vault-editor-actions"><button class="btn primary xl" id="vault-save">Encrypt &amp; save</button><button class="btn ghost xl" id="vault-editor-cancel">Cancel</button></div>
+</div></div>
+<div aria-labelledby="auth-title" aria-modal="true" class="modal" id="login-modal" role="dialog"><div class="modal-card auth-card glass-xl">
+<button aria-label="Close" class="modal-close" id="login-close">×</button>
+<div class="eyebrow">ACCOUNT SECURITY</div>
+<h2 id="auth-title">Welcome back</h2>
+<p class="auth-sub" id="auth-subtitle">Your password never leaves this browser. We verify a proof derived from it.</p>
+<div class="auth-tabs" role="tablist"><button aria-selected="true" class="auth-tab active" data-auth-tab="signin" role="tab">Sign in</button><button aria-selected="false" class="auth-tab" data-auth-tab="signup" role="tab">Create account</button><button aria-selected="false" class="auth-tab" data-auth-tab="reset" role="tab">Reset</button></div>
+
+<form autocomplete="on" class="auth-form" data-auth-form="signin" id="form-signin" novalidate="">
+<label class="field-label" for="signin-email">Email</label><input autocomplete="username" class="input" id="signin-email" inputmode="email" placeholder="you@company.com" type="email"/>
+<label class="field-label" for="signin-password">Password</label><div class="password-box"><input autocomplete="current-password" class="input" id="signin-password" placeholder="Your password" type="password"/><button aria-label="Show password" class="icon-btn reveal" data-reveal="signin-password" type="button">◉</button></div>
+<div class="auth-status" id="signin-status" role="status"></div>
+<button class="btn primary xl block" id="signin-submit" type="submit">Sign in</button>
+<button class="btn secondary xl block passkey-btn" id="passkey-signin" type="button">🔑 Sign in with a passkey</button>
+<div class="auth-links"><button class="link-btn" data-auth-tab="reset" type="button">Forgot password?</button><button class="link-btn" data-auth-tab="signup" type="button">New here? Create an account</button></div>
+<div class="demo-fill hidden" id="demo-fill"><span>Demo accounts</span><button data-demo-role="admin" type="button">Admin</button><button data-demo-role="analyst" type="button">Analyst</button><button data-demo-role="user" type="button">Vault user</button></div>
+</form>
+
+<form class="auth-form hidden" data-auth-form="signup" id="form-signup" novalidate="">
+<label class="field-label" for="signup-email">Email</label><input autocomplete="email" class="input" id="signup-email" inputmode="email" placeholder="you@company.com" type="email"/>
+<label class="field-label" for="signup-password">Password</label><div class="password-box"><input autocomplete="new-password" class="input" id="signup-password" placeholder="A long, unique passphrase" type="password"/><button aria-label="Show password" class="icon-btn reveal" data-reveal="signup-password" type="button">◉</button></div>
+<div class="auth-meter"><i id="signup-meter"></i></div>
+<label class="field-label" for="signup-confirm">Confirm password</label><input autocomplete="new-password" class="input" id="signup-confirm" placeholder="Type it again" type="password"/><small class="pm-note hidden" id="signup-pm-note">✓ Filled by your password manager, so the confirmation was filled for you.</small>
+<ul class="policy-list" data-policy-for="signup"><li data-rule="length">At least 15 characters</li><li data-rule="common">Not a commonly used password</li><li data-rule="context">Doesn't contain your username or "privpass"</li><li data-rule="match">Both passwords match</li><li class="pending" data-rule="breach">Not found in known breaches (checked on submit)</li></ul>
+<div class="auth-status" id="signup-status" role="status"></div>
+<button class="btn primary xl block" id="signup-submit" type="submit">Create account</button>
+<div class="auth-links"><button class="link-btn" data-auth-tab="signin" type="button">Already have an account? Sign in</button></div>
+</form>
+
+<form class="auth-form hidden" data-auth-form="reset" id="form-reset" novalidate="">
+<div id="reset-step-1"><label class="field-label" for="reset-email">Email</label><input autocomplete="email" class="input" id="reset-email" inputmode="email" placeholder="you@company.com" type="email"/>
+<p class="muted small">We'll issue a single-use reset link. In demo mode the link token is applied here automatically.</p></div>
+<div class="hidden" id="reset-step-2"><div class="auth-note">Resetting <b id="reset-for">—</b>. Your encrypted vault will be cleared, because nobody (including us) can decrypt it without the old password.</div>
+<label class="field-label" for="reset-password">New password</label><div class="password-box"><input autocomplete="new-password" class="input" id="reset-password" placeholder="A long, unique passphrase" type="password"/><button aria-label="Show password" class="icon-btn reveal" data-reveal="reset-password" type="button">◉</button></div>
+<div class="auth-meter"><i id="reset-meter"></i></div>
+<label class="field-label" for="reset-confirm">Confirm new password</label><input autocomplete="new-password" class="input" id="reset-confirm" placeholder="Type it again" type="password"/><small class="pm-note hidden" id="reset-pm-note">✓ Filled by your password manager, so the confirmation was filled for you.</small>
+<ul class="policy-list" data-policy-for="reset"><li data-rule="length">At least 15 characters</li><li data-rule="common">Not a commonly used password</li><li data-rule="context">Doesn't contain your username or "privpass"</li><li data-rule="match">Both passwords match</li><li class="pending" data-rule="breach">Not found in known breaches (checked on submit)</li></ul></div>
+<div class="auth-status" id="reset-status" role="status"></div>
+<button class="btn primary xl block" id="reset-submit" type="submit">Send reset link</button>
+<div class="auth-links"><button class="link-btn" data-auth-tab="signin" type="button">Back to sign in</button></div>
+</form>
+</div></div>
+<div aria-labelledby="lock-title" aria-modal="true" class="modal" id="lock-modal" role="alertdialog"><div class="modal-card auth-card glass-xl lock-card">
+<button aria-label="Close" class="modal-close" id="lock-close">×</button>
+<div class="lock-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 14.5v2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+<div class="eyebrow danger-eyebrow">PASSWORD BREACHED</div><h2 id="lock-title">Account locked</h2>
+<p class="lock-for">for <b id="lock-email">this account</b></p>
+<p class="lock-reason" id="lock-reason">Your password was just found in breach data.</p>
+<ul class="lock-facts"><li>Every session was signed out, on every device</li><li>Sign-in is blocked, even with a passkey, until the password is reset</li><li>The server found the match itself; your password never left your browser</li></ul>
+<button class="btn primary xl block" id="lock-reset" type="button">Reset my password</button>
+</div></div>
+<div aria-labelledby="sec-title" aria-modal="true" class="modal" id="security-modal" role="dialog"><div class="modal-card auth-card glass-xl">
+<button aria-label="Close" class="modal-close" id="security-close">×</button>
+<div class="eyebrow">ACCOUNT SECURITY</div><h2 id="sec-title">Security settings</h2>
+<div class="breach-alert hidden" id="sec-forced"><b>Your password appeared in a new data breach.</b><span>It was clean when you set it, but it has since shown up in breach data. Everything else is locked until you choose a new one.</span><div class="sim-note hidden" id="sec-sim-note">🧪 <b>This is a simulation</b> started by an administrator for a demo. <button class="link-btn hidden" id="sec-sim-clear" type="button">Remove simulation</button></div></div>
+<div class="demo-lock hidden" id="sec-demo-note"><b>Shared demo account.</b> Everyone trying PrivPass signs in with these credentials, so the password cannot be changed here. <button class="link-btn" id="sec-demo-signup" type="button">Create your own account</button> to try password change, reset and the rest.</div>
+<section class="sec-section sec-watch"><h3>Breach watch</h3><p class="muted small">The server re-checks your password against known breaches at every sign-in and on a schedule, without ever seeing it. If it ever shows up, the account is locked and you'll be asked to reset it.</p><div class="sec-watch-row"><button class="btn secondary" id="sec-recheck" type="button">Check my password now</button><small id="sec-recheck-status" class="muted"></small></div></section>
+<section class="sec-section" id="sec-change-section"><h3>Change password</h3><p class="muted small">Your vault is re-encrypted in this browser with the new password — the server never sees either password.</p>
+<form class="auth-form" id="form-security" novalidate=""><label class="field-label" for="sec-current">Current password</label><input autocomplete="current-password" class="input" id="sec-current" type="password"/>
+<label class="field-label" for="sec-new">New password</label><div class="password-box"><input autocomplete="new-password" class="input" id="sec-new" type="password"/><button aria-label="Show password" class="icon-btn reveal" data-reveal="sec-new" type="button">◉</button></div><div class="auth-meter"><i id="sec-meter"></i></div>
+<label class="field-label" for="sec-confirm">Confirm new password</label><input autocomplete="new-password" class="input" id="sec-confirm" type="password"/><small class="pm-note hidden" id="sec-pm-note">✓ Filled by your password manager, so the confirmation was filled for you.</small>
+<ul class="policy-list" data-policy-for="sec"><li data-rule="length">At least 15 characters</li><li data-rule="common">Not a commonly used password</li><li data-rule="context">Doesn't contain your username or "privpass"</li><li data-rule="match">Both passwords match</li><li class="pending" data-rule="breach">Not found in known breaches (checked on submit)</li></ul>
+<div class="auth-status" id="sec-status" role="status"></div><button class="btn primary xl block" id="sec-submit" type="submit">Change password</button></form></section>
+<section class="sec-section" id="sec-passkeys"><h3>Passkeys</h3><p class="muted small">Sign in with your fingerprint, face or device PIN — phishing-resistant and nothing to leak. Your vault still needs your password to unlock.</p>
+<div class="passkey-list" id="passkey-list"></div><button class="btn secondary" id="passkey-add" type="button">＋ Add a passkey</button><div class="auth-status" id="pk-status" role="status"></div></section>
+</div></div>
+<button class="proof-fab" id="proof-fab" type="button" title="Live privacy proof"><span>🛡</span><b id="proof-count">0</b><i id="proof-leaks">0 leaks</i></button>
+<aside class="proof-drawer glass-xl" id="proof-drawer" aria-label="Privacy proof"><div class="proof-head"><div><div class="panel-kicker">LIVE PRIVACY PROOF</div><h3>Every request this page sends</h3><p class="muted small">Each request's URL and body is checked for any password typed on this page — as text, and as its full SHA-1 hash.</p></div><button class="modal-close" id="proof-close">×</button></div>
+<div class="proof-stats"><div><span>Requests</span><b id="proof-total">0</b></div><div><span>Leaving this site</span><b id="proof-external">0</b></div><div><span>Password found</span><b class="good" id="proof-leaks-n">0</b></div></div>
+<div class="proof-list" id="proof-list"><div class="empty-state">Type a password and press “Check with HIBP” to watch it work.</div></div></aside>
+<div class="tour hidden" id="tour"><div class="tour-spot" id="tour-spot"></div><div class="tour-card glass-xl" id="tour-card"><div class="panel-kicker" id="tour-step">STEP 1</div><h3 id="tour-title">—</h3><p id="tour-text">—</p><div class="tour-actions"><button class="btn ghost" id="tour-skip" type="button">End tour</button><button class="btn secondary" id="tour-back" type="button">Back</button><button class="btn primary" id="tour-next" type="button">Next</button></div></div></div>
+<div class="toast" id="toast"></div>
+<script src="/static/privacy-proof.js?v=7.3.0"></script>
+<script src="/static/ml/password-model.js?v=7.3.0"></script>
+<script src="/static/ml/structure-model.js?v=7.3.0"></script>
+<script src="/static/app.js?v=7.3.0"></script>
+<script src="/static/exposure.js?v=7.3.0"></script>
+<script src="/static/features.js?v=7.3.0"></script>
+<script src="/static/motion.js?v=7.3.0"></script>
+</body>
+</html>

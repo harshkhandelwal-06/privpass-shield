@@ -1,0 +1,32 @@
+# One-click public demo on Render (https://render.com): New → Blueprint → select this repo → Apply.
+# Runs with production security (Secure cookies, no reset tokens in responses, real admin from env vars)
+# while still hosting the shared DEMO workspace for judges. Real accounts never see demo data.
+services:
+  - type: web
+    name: privpass-shield
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PRIVPASS_PUBLIC_DEMO
+        value: "true"               # keep the demo accounts, demo assets and simulations (demo workspace only)
+      - key: PRIVPASS_DEMO_AUTOSEED
+        value: "true"               # fill the demo workspace with the sample story on a fresh start
+      - key: APP_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DATABASE_URL
+        value: sqlite:////app/runtime/privpass.db   # resets when the instance restarts; use Postgres to keep data
+      - key: PRIVPASS_ADMIN_EMAIL
+        sync: false                 # your private real admin (never shown in the Demo Center)
+      - key: PRIVPASS_ADMIN_PASSWORD
+        sync: false                 # 15+ characters; choose it in the Render dashboard
+      - key: ANTHROPIC_API_KEY
+        sync: false                 # optional - offline AI mode otherwise
+      - key: GITHUB_TOKEN
+        sync: false                 # optional: private-repo scans + fix PRs (disabled for demo accounts)
+      - key: ALERT_WEBHOOK_URL
+        sync: false                 # optional: Slack/Teams/Discord (demo alerts are never forwarded)

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Acme Cloud — sign up (fictional demo)</title>
+<meta name="description" content="A fictional company's signup page showing the PrivPass drop-in password widget."/>
+<script src="/static/widget/privpass-password-field.js" defer></script>
+<style>
+  :root{--ink:#14161f;--muted:#646a7b;--line:#e3e5ee;--brand:#5b4cf0;--bg:#f6f7fb}
+  *{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  .banner{background:#fff8e1;border-bottom:1px solid #f1dfa6;color:#6b5510;font-size:13px;padding:9px 16px;text-align:center}
+  .wrap{min-height:calc(100vh - 38px);display:grid;grid-template-columns:1.1fr 1fr}
+  .side{background:linear-gradient(160deg,#5b4cf0,#2d1e9e);color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between}
+  .logo{font-weight:800;font-size:20px;letter-spacing:-.02em}.logo span{opacity:.7;font-weight:500}
+  .side h1{font-size:42px;line-height:1.08;letter-spacing:-.03em;margin:0 0 14px}.side p{opacity:.85;line-height:1.6;max-width:440px}
+  .snippet{background:rgba(0,0,0,.25);border-radius:12px;padding:14px 16px;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-all}
+  .main{display:flex;align-items:center;justify-content:center;padding:40px 20px}
+  form{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px;box-shadow:0 20px 60px rgba(20,22,31,.07)}
+  h2{margin:0 0 6px;font-size:24px}.sub{color:var(--muted);margin:0 0 20px;font-size:14px}
+  label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+  input[type=email]{width:100%;font:inherit;padding:11px 12px;border:1px solid rgba(0,0,0,.18);border-radius:10px}
+  privpass-password-field{--pp-accent:#5b4cf0}
+  button[type=submit]{width:100%;margin-top:18px;padding:13px;border:0;border-radius:10px;background:var(--brand);color:#fff;font:600 15px inherit;cursor:pointer}
+  button[type=submit]:disabled{opacity:.5;cursor:not-allowed}
+  .done{margin-top:14px;padding:12px;border-radius:10px;background:#eefaf4;color:#12603f;font-size:13px;display:none}
+  .log{margin-top:14px;font:11.5px ui-monospace,monospace;color:var(--muted);max-height:120px;overflow:auto}
+  @media(max-width:860px){.wrap{grid-template-columns:1fr}.side{padding:32px 20px}.side h1{font-size:30px}}
+</style>
+</head>
+<body>
+<div class="banner">Fictional company for demonstration. “Acme Cloud” is not a real service — this page only shows how the PrivPass widget embeds in any signup form.</div>
+<div class="wrap">
+  <aside class="side">
+    <div class="logo">Acme Cloud <span>· demo</span></div>
+    <div>
+      <h1>Ship faster.<br/>Stay unbreached.</h1>
+      <p>This signup form gained NIST-aligned breached-password protection with a single script tag and a single element — no backend changes.</p>
+      <div class="snippet">&lt;script src="/static/widget/privpass-password-field.js"&gt;&lt;/script&gt;
+&lt;privpass-password-field name="password" username-field="#email"
+    context-words="acme"&gt;&lt;/privpass-password-field&gt;</div>
+    </div>
+    <small style="opacity:.7">Try: <code>password12345678</code>, <code>acme-cloud-rocks-2026</code>, or a long unique passphrase.</small>
+  </aside>
+  <main class="main">
+    <form id="signup" novalidate>
+      <h2>Create your Acme account</h2>
+      <p class="sub">Free for 14 days. No credit card.</p>
+      <label for="email">Work email</label>
+      <input id="email" name="email" type="email" placeholder="you@company.com" required/>
+      <label>Password</label>
+      <privpass-password-field name="password" username-field="#email" context-words="acme" placeholder="A long, unique passphrase"></privpass-password-field>
+      <button id="go" type="submit">Create account</button>
+      <div class="done" id="done">✓ The form would now submit. The browser's own form validation blocked every weak or breached password before this point.</div>
+      <div class="log" id="log"></div>
+    </form>
+  </main>
+</div>
+<script>
+  const form = document.getElementById('signup'); const log = document.getElementById('log');
+  document.addEventListener('privpass-status', (e) => {
+    const d = e.detail;
+    log.insertAdjacentHTML('afterbegin', `<div>privpass-status → valid=${d.valid} breached=${d.breached} via=${d.mode}${d.reasons.length ? ' · ' + d.reasons[0] : ''}</div>`);
+  });
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const field = form.querySelector('privpass-password-field');
+    if (!form.checkValidity() || !field.valid) { form.reportValidity(); return; }
+    document.getElementById('done').style.display = 'block';
+  });
+</script>
+</body>
+</html>

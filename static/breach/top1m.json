@@ -1,0 +1,9 @@
+{
+  "n": 1000000,
+  "m": 14377592,
+  "k": 10,
+  "fpr": 0.001,
+  "hash": "sha1-nfkc-double-hashing-v1",
+  "source": "SecLists Pwdb_top-1000000 (public, frequency-ranked leaked passwords)",
+  "bytes": 1797199
+}

@@ -1,0 +1,9 @@
+name: PrivPass demo gate
+on: [push, pull_request]
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PrivPass SecretGuard (demo)
+        run: python tools/secret_scan.py repository . --fail-on-critical

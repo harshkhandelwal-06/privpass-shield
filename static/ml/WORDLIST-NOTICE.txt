@@ -1,0 +1,9 @@
+words-names.txt.gz — ranked dictionary for the word & name guessing model (structure-model.js)
+
+One lowercase token per line, ordered by how early an attacker running word + name lists reaches it:
+  * 40,000 most frequent English words from wordfreq 3.1.1 (data: CC BY-SA 4.0, Robyn Speer / Luminoso;
+    https://github.com/rspeer/wordfreq). This derived list is shared under CC BY-SA 4.0.
+  * 30,000 first names and 50,000 surnames ranked by their best per-country popularity rank, from
+    names-dataset 3.3.1 (Apache-2.0, Philippe Rémy; https://github.com/philipperemy/name-dataset).
+    Only aggregate name popularity is used — no records about any person.
+Rebuild: tools/build_wordlist.py

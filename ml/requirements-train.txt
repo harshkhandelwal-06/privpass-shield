@@ -1,0 +1,4 @@
+# Only needed to RE-TRAIN the models (the trained artefacts ship with the project).
+-r ../requirements.txt
+torch>=2.4
+zxcvbn==4.5.0

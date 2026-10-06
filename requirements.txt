@@ -1,0 +1,18 @@
+fastapi==0.140.3
+uvicorn[standard]==0.52.4
+sqlalchemy==2.0.54
+pydantic==2.13.5
+cryptography==50.0.1
+argon2-cffi==25.1.0
+python-multipart==0.0.20
+psycopg[binary]==3.3.5
+redis==8.1.0
+httpx==0.28.1
+pytest==8.4.2
+# AI / ML runtime (inference only - training deps are in ml/requirements-train.txt)
+numpy==2.4.4
+scikit-learn==1.8.0
+lightgbm==4.7.0
+anthropic==1.8.0
+# Passkeys (WebAuthn)
+webauthn==3.0.1

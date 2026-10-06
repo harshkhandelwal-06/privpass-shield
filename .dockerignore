@@ -1,0 +1,11 @@
+# Never bake secrets or local data into an image.
+.env
+.env.*
+!.env.example
+runtime/
+.git/
+.venv/
+venv/
+**/__pycache__/
+.pytest_cache/
+*.pyc
