@@ -107,7 +107,7 @@ The full analysis, including what a modified browser can and cannot do, is in [`
 3. Open **http://localhost:8000**. Use `localhost`, not `127.0.0.1`, so passkeys work.
 4. Stop the server with `STOP-PRIVPASS.bat`.
 
-Helper scripts in [`scripts/`](scripts): `VERIFY-PRIVPASS.bat` (tests), `DOCTOR-PRIVPASS.bat` (diagnostics), `RESET-PRIVPASS.bat` (clean start), `RUN-SECRETGUARD-DEMO.bat`, `INSTALL-SECRETGUARD-HOOK.bat` and `RUN-SECRETGUARD-HOOK-DEMO.bat`.
+Helper scripts in [`scripts/`](scripts): `VERIFY-PRIVPASS.bat` (tests), `DOCTOR-PRIVPASS.bat` (diagnostics), `RESET-PRIVPASS.bat` (clean start), `RUN-SECRETGUARD-DEMO.bat`, `INSTALL-SECRETGUARD-HOOK.bat`, `RUN-SECRETGUARD-HOOK-DEMO.bat` and `PROVE-HIBP-PRIVACY.bat`.
 
 **Linux / macOS**
 ```bash
@@ -201,6 +201,7 @@ False-positive controls: `.secretguardignore`, inline `# secretguard:allow`, and
 | Claim | Where it is proven |
 |---|---|
 | No password or full hash leaves the browser | Live privacy drawer; `docs/THREAT-MODEL.md` §1; `tests/test_auth.py` |
+| The server sends HIBP only 5-character prefixes | `python tools/prove_hibp_privacy.py` (or `scripts\PROVE-HIBP-PRIVACY.bat`): records every request the server makes to HIBP and checks it |
 | The server refuses breached passwords even if the browser says "safe" | `tests/test_features.py::test_server_rejects_breached_password_even_if_the_browser_says_safe` |
 | A lying browser can't sign in with a breached password | `tests/test_features.py::test_a_lying_browser_cannot_sign_in_with_the_breached_password` |
 | Accounts are locked even when nobody is signed in | `tests/test_features.py::test_background_sweep_locks_accounts_that_are_not_signed_in`, `tests/test_breach_lock.py` |
